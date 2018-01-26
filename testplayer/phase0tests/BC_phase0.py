@@ -77,8 +77,6 @@ if __name__ == '__main__':
     kmap = read('BC_phase0_map2.txt')
     
     timer = datetime.now().microsecond
-    #pr = cProfile.Profile()
-    #pr.enable()
     
     gap = 2
     num_clusters, cmap, neighbors = find_clusters(kmap, gap)
@@ -87,10 +85,6 @@ if __name__ == '__main__':
         num_clusters, cmap, neighbors = find_clusters(kmap, gap)
     
     timer = datetime.now().microsecond - timer
-    #pr.disable()
-    #sortby = 'cumulative'
-    #ps = pstats.Stats(pr).sort_stats(sortby)
-    #ps.print_stats()
     
     f = open('BC_phase0_map2_out.txt', 'w')
     

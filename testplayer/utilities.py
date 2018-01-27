@@ -58,3 +58,7 @@ class UnitInfo:
 
     def setup():
         bc.Unit.info = UnitInfo.access
+
+
+def factory_loc_check_update(state, ml):
+    

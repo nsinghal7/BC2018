@@ -4,7 +4,7 @@ from utilities import Path
 from utilities import KarbCluster
 
 
-def generate_start_map(self):
+def generate_kmap(self):
     planet_map = self.gc.starting_map(self.planet)
     start_map = []
     for row in range(planet_map.height):

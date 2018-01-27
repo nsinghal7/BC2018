@@ -45,6 +45,7 @@ def main():
     self.asteroids = self.gc.asteroid_pattern()
     self.orbit = self.gc.orbit_pattern()
     
+    # self.kmap[row][col] is an amount of karbonite >= 0 or -1 if impassable
     self.kmap = phase0.generate_kmap(self)
     
     if self.planet == bc.Planet.Earth:
@@ -59,8 +60,10 @@ def main_earth(self):
     self.gc.queue_research(bc.UnitType.Worker) #more build 100
     self.gc.queue_research(bc.UnitType.Mage) #more damage 125
 
-    # self.karb_clusters is a list of KarbClusters, self.neighbors[row][col] is a list of Paths to nearby karbonite within a cluster
-    self.karb_clusters, self.neighbors = phase0.earth_karbonite_search(self)
+    # self.karb_clusters is a list of KarbClusters
+    # self.neighbors[row][col] is a list of Paths to nearby karbonite within a cluster
+    # self.cmap[row][col] is a cluster id, 0 <= id < len(self.karb_clusters), or -1 if (row, col) is not part of a cluster
+    self.karb_clusters, self.neighbors, self.cmap = phase0.earth_karbonite_search(self)
     phase1.replicate_workers_phase(self)
     #TODO
     

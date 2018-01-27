@@ -34,13 +34,7 @@ def main():
     
     # For the purposes of this program, (0, 0) is the UPPERLEFT corner and Point(y, x) <=> [y][x] <=> bc.MapLocation(self.planet, x, y)
     
-    # Ex: self.dir_to_dxdy[bc.Direction.Southeast.value] => Point(-1, 1)
-    self.dir_to_dxdy = [Point(1, 0), Point(1, 1), Point(0, 1), Point(-1, 1), Point(-1, 0), Point(-1, -1), Point(0, -1), Point(1, -1), Point(0, 0)]
-    # Ex: self.dxdy_to_dir[-1][1] => bc.Direction.Southeast
-    self.dxdy_to_dir = [[bc.Direction.Center, bc.Direction.East, bc.Direction.West],
-                        [bc.Direction.North, bc.Direction.Northeast, bc.Direction.Northwest],
-                        [bc.Direction.South, bc.Direction.Southeast, bc.Direction.Southwest]]
-    self.directions = self.dir_to_dxdy[:-1]
+    self.directions = [Point(1, 0), Point(1, 1), Point(0, 1), Point(-1, 1), Point(-1, 0), Point(-1, -1), Point(0, -1), Point(1, -1)]
     
     self.planet = self.gc.planet()
     self.team = self.gc.team()

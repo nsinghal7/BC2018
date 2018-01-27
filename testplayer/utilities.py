@@ -28,8 +28,9 @@ class KarbCluster:
 def 
     
 
-def try_nearby_directions(goal):
-    yield goal
+def try_nearby_directions(goal, skip_exact=False):
+    if not skip_exact:
+        yield goal
     pos = True
     p = (goal.value + 1) & 7
     n = (goal.value - 1) & 7

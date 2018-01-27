@@ -20,22 +20,21 @@ def get_clusters(cmap, num_clusters):
 
 
 def perform_bfs(cluster, cmap, directions):
-    used = [[False for val in row] for row in cmap]
     result = [[None for val in row] for row in cmap]
     q = []
     index = 0
     for p in cluster:
-        q.append((p, Point(0, 0)))
+        q.append(p)
+        result[p.x][p.y] = Point(0, 0)
     
     while index < len(q):
-        dest, step = q[index]
-        result[dest.x][dest.y] = step
+        dest = q[index]
         
         for d in directions:
             new = dest + d
-            if not BC_phase0.out_of_bounds(new, cmap) and not used[new.x][new.y]:
-                used[new.x][new.y] = True
-                q.append((new, -d))
+            if not BC_phase0.out_of_bounds(new, cmap) and result[new.x][new.y] is None:
+                result[new.x][new.y] = -d
+                q.append(new)
         
         index += 1
     

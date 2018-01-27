@@ -15,6 +15,9 @@ class Point:
     
     def __add__(self, p):
         return Point(self.x + p.x, self.y + p.y)
+    
+    def __neg__(self):
+        return Point(-self.x, -self.y)
 
 
 class Path:
@@ -30,8 +33,7 @@ def read(file):
     return [[-1 if val == '#' else 0 if val == '.' else int(val) for val in line.split()] for line in open(file)]
 
 
-def find_clusters(kmap, gap):
-    directions = [Point(dx, dy) for dx in range(-1, 2) for dy in range(-1, 2) if dx or dy]
+def find_clusters(kmap, gap, directions):
     cmap = [[-1 if val == -1 else 0 for val in row] for row in kmap]
     neighbors = [[[] for val in row] for row in kmap]
     num_clusters = 0
@@ -59,30 +61,34 @@ def find_neighbors(loc, cluster_id, gap, kmap, cmap, neighbors, directions):
     q.append(Path(loc))
     while index < len(q):
         path = q[index]
-        _x, _y = path.dest.x - loc.x + gap, path.dest.y - loc.y + gap
+        dest, steps = path.dest, path.steps
+        _x, _y = dest.x - loc.x + gap, dest.y - loc.y + gap
         
-        if path.steps and kmap[path.dest.x][path.dest.y] > 0:
+        if steps and kmap[dest.x][dest.y] > 0:
             neighbors[loc.x][loc.y].append(path)
-            if not cmap[path.dest.x][path.dest.y]:
-                find_neighbors(path.dest, cluster_id, gap, kmap, cmap, neighbors, directions)
-        elif len(path.steps) < gap:
+            if not cmap[dest.x][dest.y]:
+                find_neighbors(dest, cluster_id, gap, kmap, cmap, neighbors, directions)
+        elif len(steps) < gap:
             for d in directions:
-                if not used[_x + d.x][_y + d.y] and not out_of_bounds(path.dest + d, kmap):
-                    used[_x + d.x][_y + d.y] = True
+                nx, ny = _x + d.x, _y + d.y
+                if not used[nx][ny] and not out_of_bounds(path.dest + d, kmap):
+                    used[nx][ny] = True
                     q.append(path + d)
         index += 1
-    
 
-if __name__ == '__main__':
+
+def run():
     kmap = read('BC_phase0_map2.txt')
     
     timer = datetime.now().microsecond
     
+    directions = [Point(dx, dy) for dx in range(-1, 2) for dy in range(-1, 2) if dx or dy]
+    
     gap = 2
-    num_clusters, cmap, neighbors = find_clusters(kmap, gap)
-    while num_clusters > 4:
-        gap += 1
-        num_clusters, cmap, neighbors = find_clusters(kmap, gap)
+    num_clusters, cmap, neighbors = find_clusters(kmap, gap, directions)
+    while num_clusters > 9:
+        gap += 1 # CHANGE
+        num_clusters, cmap, neighbors = find_clusters(kmap, gap, directions)
     
     timer = datetime.now().microsecond - timer
     
@@ -97,3 +103,9 @@ if __name__ == '__main__':
         f.write('\n')
     
     f.close()
+    
+    return num_clusters, cmap, neighbors, directions
+
+
+if __name__ == '__main__':
+    run()

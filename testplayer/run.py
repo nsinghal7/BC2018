@@ -11,7 +11,7 @@ import os
 
 
 def main():
-    self = main
+    self = Container()
     print(os.getcwd())
 
     print("pystarting")

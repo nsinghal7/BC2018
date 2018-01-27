@@ -13,16 +13,24 @@ class Point:
         return Point(-self.y, -self.x)
 
 
-class KarbCluster:
+class Destination:
     '''
-    For KarbCluster kc, kc[row][col] is a tuple (dir, dist) describing the optimal path from (row, col) to kc
-    and kc.karb is the amount of remaining karbonite
+    For Destination d, d[y][x] is a tuple (dir, dist) describing the optimal path from (y, x) to d
     '''
-    def __init__(self, map, karb):
-        self.map, self.karb = map, karb
+    def __init__(self, __map__):
+        self.__map__ = __map__
     
     def __getitem__(self, key):
-        return self.map[key]
+        return self.__map__[key]
+
+
+class KarbCluster(Destination):
+    '''
+    For KarbCluster kc, kc.karb is the amount of remaining karbonite
+    '''
+    def __init__(self, __map__, karb):
+        super().__init__(__map__)
+        self.karb = karb
 
 
 def 

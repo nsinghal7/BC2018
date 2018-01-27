@@ -23,6 +23,9 @@ class KarbCluster:
     
     def __getitem__(self, key):
         return self.map[key]
+
+
+def 
     
 
 def try_nearby_directions(goal):

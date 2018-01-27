@@ -32,7 +32,7 @@ def main():
     # aside from turns taking slightly different amounts of time due to noise.
     random.seed(6137)
     
-    # For the purposes of this program, (0, 0) is the UPPERLEFT corner and (row, col) represents [row][col]
+    # For the purposes of this program, (0, 0) is the UPPERLEFT corner and Point(y, x) <=> [y][x] <=> bc.MapLocation(self.planet, x, y)
     
     # Ex: self.dir_to_dxdy[bc.Direction.Southeast.value] => Point(-1, 1)
     self.dir_to_dxdy = [Point(1, 0), Point(1, 1), Point(0, 1), Point(-1, 1), Point(-1, 0), Point(-1, -1), Point(0, -1), Point(1, -1), Point(0, 0)]

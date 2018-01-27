@@ -21,21 +21,21 @@ def find_clusters(kmap, gap, directions):
     neighbors = [[[] for val in row] for row in kmap]
     num_clusters = 0
     
-    for x in range(len(kmap)):
-        for y in range(len(kmap[0])):
-            if kmap[x][y] > 0 and cmap[x][y] == -1:
-                find_neighbors(Point(x, y), num_clusters, gap, kmap, cmap, neighbors, directions)
+    for y in range(len(kmap)):
+        for x in range(len(kmap[0])):
+            if kmap[y][x] > 0 and cmap[y][x] == -1:
+                find_neighbors(Point(y, x), num_clusters, gap, kmap, cmap, neighbors, directions)
                 num_clusters += 1
     
     return num_clusters, cmap, neighbors
 
 
 def out_of_bounds(point, kmap):
-    return not 0 <= point.x < len(kmap) or not 0 <= point.y < len(kmap[0]) or kmap[point.x][point.y] == -1
+    return not 0 <= point.y < len(kmap) or not 0 <= point.x < len(kmap[0]) or kmap[point.y][point.x] == -1
 
 
 def find_neighbors(loc, cluster_id, gap, kmap, cmap, neighbors, directions):
-    cmap[loc.x][loc.y] = cluster_id
+    cmap[loc.y][loc.x] = cluster_id
     
     used = [[False for j in range(2 * gap + 1)] for i in range(2 * gap + 1)]
     q = []
@@ -45,28 +45,28 @@ def find_neighbors(loc, cluster_id, gap, kmap, cmap, neighbors, directions):
     while index < len(q):
         path = q[index]
         dest, steps = path.dest, path.steps
-        _x, _y = dest.x - loc.x + gap, dest.y - loc.y + gap
+        _y, _x = dest.y - loc.y + gap, dest.x - loc.x + gap
         
-        if steps and kmap[dest.x][dest.y] > 0:
-            neighbors[loc.x][loc.y].append(path)
-            if cmap[dest.x][dest.y] == -1:
+        if steps and kmap[dest.y][dest.x] > 0:
+            neighbors[loc.y][loc.x].append(path)
+            if cmap[dest.y][dest.x] == -1:
                 find_neighbors(dest, cluster_id, gap, kmap, cmap, neighbors, directions)
         elif len(steps) < gap:
             for d in directions:
-                nx, ny = _x + d.x, _y + d.y
-                if not used[nx][ny] and not out_of_bounds(path.dest + d, kmap):
-                    used[nx][ny] = True
+                ny, nx = _y + d.y, _x + d.x
+                if not used[ny][nx] and not out_of_bounds(path.dest + d, kmap):
+                    used[ny][nx] = True
                     q.append(path + d)
         index += 1
 
 
 def get_clusters(cmap, kmap, num_clusters):
     result = [([], 0) for i in range(num_clusters)]
-    for x in range(len(cmap)):
-        for y in range(len(cmap[0])):
-            if cmap[x][y] != -1:
-                result[cmap[x][y]][0].append(Point(x, y))
-                result[cmap[x][y]][1] += kmap[x][y]
+    for y in range(len(cmap)):
+        for x in range(len(cmap[0])):
+            if cmap[y][x] != -1:
+                result[cmap[y][x]][0].append(Point(y, x))
+                result[cmap[y][x]][1] += kmap[y][x]
     return result
 
 
@@ -76,15 +76,15 @@ def perform_bfs(cluster, kmap, directions):
     index = 0
     for p in cluster:
         q.append((p, 0))
-        result[p.x][p.y] = Point(0, 0), 0
+        result[p.y][p.x] = Point(0, 0), 0
     
     while index < len(q):
         dest, dist = q[index]
         
         for d in directions:
             new = dest + d
-            if not out_of_bounds(new, kmap) and result[new.x][new.y] is None:
-                result[new.x][new.y] = -d, dist + 1
+            if not out_of_bounds(new, kmap) and result[new.y][new.x] is None:
+                result[new.y][new.x] = -d, dist + 1
                 q.append((new, dist + 1))
         
         index += 1

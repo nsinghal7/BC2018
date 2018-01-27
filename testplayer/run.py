@@ -45,7 +45,7 @@ def main():
     self.asteroids = self.gc.asteroid_pattern()
     self.orbit = self.gc.orbit_pattern()
     
-    self.start_map = phase0.generate_start_map(self)
+    self.kmap = phase0.generate_kmap(self)
     
     if self.planet == bc.Planet.Earth:
         main_earth(self)

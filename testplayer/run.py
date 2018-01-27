@@ -12,6 +12,7 @@ import os
 
 def main():
     self = Container()
+    UnitInfo.setup()
     print(os.getcwd())
 
     print("pystarting")

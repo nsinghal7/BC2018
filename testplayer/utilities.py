@@ -27,4 +27,5 @@ class UnitInfo:
             UnitInfo.info[unit.id] = Container()
         return UnitInfo.info[unit.id]
 
-bc.Unit.info = UnitInfo.access
+    def setup():
+        bc.Unit.info = UnitInfo.access

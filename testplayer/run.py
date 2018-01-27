@@ -41,10 +41,11 @@ def main():
     self.directions = self.dir_to_dxdy[:-1]
     
     self.planet = self.gc.planet()
-    self.start_map = self.gc.starting_map(planet)
     self.team = self.gc.team()
     self.asteroids = self.gc.asteroid_pattern()
     self.orbit = self.gc.orbit_pattern()
+    
+    self.start_map = phase0.generate_start_map(self)
     
     if self.planet == bc.Planet.Earth:
         main_earth(self)

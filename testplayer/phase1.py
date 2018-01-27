@@ -1,46 +1,20 @@
+import utilities
+import battlecode as bc
+
+PHASE1_WORKERS_WANTED = 10
+
 def replicate_workers_phase(state):
-    units = gc.units()
-    factory_loc = units[0].location.map_location()
+    units = state.gc.units()
+    factory_loc = None #TODO
     replicate_id = units[0].id
+    for unit in units:
+        #TODO check distance, set id accordingly
 
     while True:
-        for unit in units():
-            if unit.id != state.replicate_id:
-                # collect efficiently, don't care about direction
-                direction, hdir = towards_karbonite(unit.location.map_location())
-                if direction != bc.Direction.Center:
+        units = state.gc.units()
+        index = 0
+        while index < len(units):
+            unit = units[index]
+            if unit.id == replicate_id:
+                if len(units) < PHASE1_WORKERS_WANTED:
                     pass
-
-
-def towards_karbonite(ml):
-    # get direction to move, direction from there to max karbonite
-    (xmax, ymax), (x2, y2) = highest_2_karbonite_in_25(ml)
-    if abs(ymax) != 2:
-        # freedom to choose y pos
-        if (ymax > 0) == (y2 > 0):
-            dy = ymax
-        else:
-            dy = 0
-    else:
-        dy = ymax >> 1 # go towards ymax
-    if abs(xmax) != 2:
-        if (xmax > 0) == (x2 > 0):
-            dx = xmax
-        else:
-            dx = 0
-    else:
-        dx = xmax >> 1
-    return directionMap[dy + 1][dx + 1], directionMap[ymax - dy + 1][xmax - dx + 1]
-
-def highest_2_karbonite_in_25(ml):
-    kmax, xmax, ymax = -1, None, None
-    k2, x2, y2 = -1, None, None
-    for x in range(-2, 3):
-        for y in range(-2, 3):
-            k = gc.karbonite_at(ml.translate(x, y))
-            if k > kmax:
-                k2, x2, y2 = kmax, xmax, ymax
-                kmax, xmax, ymax = k, x, y
-            else:
-                k2, x2, y2 = k, x, y
-    return (xmax, ymax), (x2, y2)

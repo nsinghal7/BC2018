@@ -37,3 +37,16 @@ def try_nearby_directions(goal):
             n = (n - 1) & 7
             pos = True
     yield p
+
+class Container:
+    pass
+
+class UnitInfo:
+    info = {}
+
+    def access(unit):
+        if unit.id not in UnitInfo.info:
+            UnitInfo.info[unit.id] = Container()
+        return UnitInfo.info[unit.id]
+
+bc.Unit.info = UnitInfo.access

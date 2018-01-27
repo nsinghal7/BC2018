@@ -1,5 +1,27 @@
 import battlecode as bc
 
+
+class Point:
+    
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+    
+    def __add__(self, p):
+        return Point(self.x + p.x, self.y + p.y)
+    
+    def __neg__(self):
+        return Point(-self.x, -self.y)
+
+
+class KarbCluster:
+    
+    def __init__(self, map, karb):
+        self.map, self.karb = map, karb
+    
+    def __getitem__(self, key):
+        return self.map[key]
+    
+
 def try_nearby_directions(goal):
     yield goal
     pos = True

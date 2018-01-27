@@ -3,18 +3,21 @@ import battlecode as bc
 
 class Point:
     
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+    def __init__(self, y, x):
+        self.y, self.x = y, x
     
     def __add__(self, p):
-        return Point(self.x + p.x, self.y + p.y)
+        return Point(self.y + p.y, self.x + p.x)
     
     def __neg__(self):
-        return Point(-self.x, -self.y)
+        return Point(-self.y, -self.x)
 
 
 class KarbCluster:
-    
+    '''
+    For KarbCluster kc, kc[row][col] is a tuple (dir, dist) describing the optimal path from (row, col) to kc
+    and kc.karb is the amount of remaining karbonite
+    '''
     def __init__(self, map, karb):
         self.map, self.karb = map, karb
     

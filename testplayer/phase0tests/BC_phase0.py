@@ -34,15 +34,15 @@ def read(file):
 
 
 def find_clusters(kmap, gap, directions):
-    cmap = [[-1 if val == -1 else 0 for val in row] for row in kmap]
+    cmap = [[-1 for val in row] for row in kmap]
     neighbors = [[[] for val in row] for row in kmap]
     num_clusters = 0
     
     for x in range(len(kmap)):
         for y in range(len(kmap[0])):
-            if kmap[x][y] > 0 and not cmap[x][y]:
-                num_clusters += 1
+            if kmap[x][y] > 0 and cmap[x][y] == -1:
                 find_neighbors(Point(x, y), num_clusters, gap, kmap, cmap, neighbors, directions)
+                num_clusters += 1
     
     return num_clusters, cmap, neighbors
 
@@ -66,7 +66,7 @@ def find_neighbors(loc, cluster_id, gap, kmap, cmap, neighbors, directions):
         
         if steps and kmap[dest.x][dest.y] > 0:
             neighbors[loc.x][loc.y].append(path)
-            if not cmap[dest.x][dest.y]:
+            if cmap[dest.x][dest.y] == -1:
                 find_neighbors(dest, cluster_id, gap, kmap, cmap, neighbors, directions)
         elif len(steps) < gap:
             for d in directions:
@@ -98,13 +98,13 @@ def run():
     f.write('Took %f milliseconds.\n' % (timer / 1000))
     for row in cmap:
         for val in row:
-            f.write('#' if val == -1 else '.' if val == 0 else str(val))
+            f.write('.' if val == -1 else str(val))
             f.write(' ')
         f.write('\n')
     
     f.close()
     
-    return num_clusters, cmap, neighbors, directions
+    return num_clusters, cmap, kmap, neighbors, directions
 
 
 if __name__ == '__main__':

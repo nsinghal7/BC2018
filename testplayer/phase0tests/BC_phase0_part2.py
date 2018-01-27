@@ -11,11 +11,11 @@ from datetime import datetime
 
 
 def get_clusters(cmap, num_clusters):
-    result = [[] for i in range(num_clusters + 1)]
+    result = [[] for i in range(num_clusters)]
     for x in range(len(cmap)):
         for y in range(len(cmap[0])):
             if cmap[x][y] > 0:
-                result[cmap[x][y]].append(Point(x, y))
+                result[cmap[x][y] - 1].append(Point(x, y))
     return result
 
 
@@ -24,17 +24,17 @@ def perform_bfs(cluster, cmap, directions):
     q = []
     index = 0
     for p in cluster:
-        q.append(p)
-        result[p.x][p.y] = Point(0, 0)
+        q.append((p, 0))
+        result[p.x][p.y] = Point(0, 0), 0
     
     while index < len(q):
-        dest = q[index]
+        dest, dist = q[index]
         
         for d in directions:
             new = dest + d
             if not BC_phase0.out_of_bounds(new, cmap) and result[new.x][new.y] is None:
-                result[new.x][new.y] = -d
-                q.append(new)
+                result[new.x][new.y] = -d, dist + 1
+                q.append((new, dist + 1))
         
         index += 1
     
@@ -42,8 +42,8 @@ def perform_bfs(cluster, cmap, directions):
 
 
 def find_directions_to(clusters, cmap, directions):
-    karb_finder = [None]
-    for i in range(1, len(clusters)):
+    karb_finder = []
+    for i in range(len(clusters)):
         karb_finder.append(perform_bfs(clusters[i], cmap, directions))
     return karb_finder
 

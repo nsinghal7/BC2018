@@ -4,8 +4,9 @@ import sys
 import traceback
 import time
 import math
+from phase0 import earth_karbonite_search
 from phase1 import replicate_workers_phase
-import utilities
+from utilities import Point
 
 import os
 
@@ -20,10 +21,6 @@ def main():
     # A GameController is the main type that you talk to the game with.
     # Its constructor will connect to a running game.
     self.gc = bc.GameController()
-    self.directions = list(bc.Direction)
-    self.directionMap = [[bc.Direction.Northwest, bc.Direction.North, bc.Direction.Northeast],
-                        [bc.Direction.West, bc.Direction.Center, bc.Direction.East],
-                        [bc.Direction.Southwest, bc.Direction.South, bc.Direction.Southeast]]
 
     print("pystarted")
 
@@ -31,6 +28,19 @@ def main():
     # determinism isn't required, but it means that the same things will happen in every thing you run,
     # aside from turns taking slightly different amounts of time due to noise.
     random.seed(6137)
+    
+    self.dir_to_dxdy = [Point(-1, 0), Point(-1, 1), Point(0, 1), Point(1, 1), Point(1, 0), Point(1, -1), Point(0, -1), Point(-1, -1), Point(0, 0)]
+    self.dxdy_to_dir = [[bc.Direction.Northwest, bc.Direction.North, bc.Direction.Northeast],
+                        [bc.Direction.West, bc.Direction.Center, bc.Direction.East],
+                        [bc.Direction.Southwest, bc.Direction.South, bc.Direction.Southeast]]
+    self.directions = self.dir_to_dxdy[:-1]
+    
+    self.planet = self.gc.planet()
+    self.start_map = self.gc.starting_map(planet)
+    self.team = self.gc.team()
+    self.asteroids = self.gc.asteroid_pattern()
+    self.orbit = 
+    
 
     # let's start off with some research!
     # we can queue as much as we want.
@@ -38,10 +48,6 @@ def main():
     self.gc.queue_research(bc.UnitType.Worker) #more build 100
     self.gc.queue_research(bc.UnitType.Mage) #more damage 125
 
-
-    self.planet = gc.planet()
-    self.start_map = gc.starting_map(planet)
-    self.team = gc.team()
-
+    self.karb_clusters, self.neighbors = earth_karbonite_search(self)
     replicate_workers_phase(self)
     #TODO

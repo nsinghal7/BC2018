@@ -14,7 +14,10 @@ class Point:
 
 
 class KarbCluster:
-    
+    '''
+    For KarbCluster kc, kc[row][col] is a tuple (dir, dist) describing the optimal path from (row, col) to kc
+    and kc.karb is the amount of remaining karbonite
+    '''
     def __init__(self, map, karb):
         self.map, self.karb = map, karb
     

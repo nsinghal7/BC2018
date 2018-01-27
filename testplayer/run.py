@@ -59,6 +59,7 @@ def main_earth(self):
     self.gc.queue_research(bc.UnitType.Worker) #more build 100
     self.gc.queue_research(bc.UnitType.Mage) #more damage 125
 
+    # self.karb_clusters is a list of KarbClusters, self.neighbors[row][col] is a list of Paths to nearby karbonite within a cluster
     self.karb_clusters, self.neighbors = phase0.earth_karbonite_search(self)
     phase1.replicate_workers_phase(self)
     #TODO

@@ -5,13 +5,12 @@ from utilities import KarbCluster
 
 
 def generate_kmap(self):
-    planet_map = self.gc.starting_map(self.planet)
     start_map = []
-    for row in range(planet_map.height):
+    for row in range(self.planet_map.height):
         map_row = []
-        for col in range(planet_map.width):
+        for col in range(self.planet_map.width):
             loc = bc.MapLocation(self.planet, col, row)
-            map_row.append(planet_map.initial_karbonite_at(loc) if planet_map.is_passable_terrain_at(loc) else -1)
+            map_row.append(self.planet_map.initial_karbonite_at(loc) if self.planet_map.is_passable_terrain_at(loc) else -1)
         start_map.append(map_row)
     return start_map
 

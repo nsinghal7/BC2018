@@ -126,7 +126,7 @@ def follow_path_to_cluster(self, worker):
     y, x = loc.y, loc.x
     direc, score = Point(0, 0), 0
     for cluster in self.karb_clusters:
-        s = cluster_worker_score(loc, cluster[y][x])
+        s = cluster_worker_score(loc, cluster)
         if s > score:
             direc, score = cluster[y][x][0], s
     d = direc.to_Direction()
@@ -190,21 +190,31 @@ def location_out_of_karbonite(state, ml):
 
 
 def follow_path_to_karb(self, worker):
-    path = worker.info().path_to_karb
+    info = worker.info()
+    path = info.path_to_karb
     if self.gc.is_move_ready(worker.id):
         for d in try_nearby_directions(path[0].to_Direction()):
             if self.gc.can_move(worker.id, d):
                 self.gc.move_robot(worker.id, d)
-                path[1] = path[1] + path[0] + -Point(d)
-                if -1 <= path[1].y <= 1 and -1 <= path[1].x <= 1:
-                    worker.info().path_to_karb = new_path = path[1:]
-                    if len(new_path) == 1:
-                        harvest(self, worker, new_path[0].to_Direction())
+                if len(path) == 1:
+                    path[0] = path[0] + -Point(d)
+                    if -1 <= path[0].y <= 1 and -1 <= path[0].x <= 1:
+                        harvest(self, worker, path[0].to_Direction())
+                    else:
+                        info.path_to_karb = None
+                        info.mode = 'random'
                 else:
-                    worker.info().path_to_karb = None
-                    worker.info().mode = 'random'
+                    path[1] = path[1] + path[0] + -Point(d)
+                    if -1 <= path[1].y <= 1 and -1 <= path[1].x <= 1:
+                        new_path = path[1:]
+                        info.path_to_karb = new_path
+                        if len(new_path) == 1:
+                            harvest(self, worker, new_path[0].to_Direction())
+                    else:
+                        info.path_to_karb = None
+                        info.mode = 'random'
                 return
-        worker.info().mode = 'random'
+        info.mode = 'random'
 
 
 '''

@@ -3,6 +3,14 @@ import random
 
 MORE_THAN_MAX_MAP_DIM = 70
 
+def begin_round(state):
+    print("round: %d, time left: %d" % (state.gc.round(), state.gc.get_time_left_ms()))
+
+def end_round(state):
+    state.gc.next_turn()
+    sys.stdout.flush()
+    sys.stderr.flush()
+
 class Point:
     
     # Ex: Point(bc.Direction.Southeast) => Point(-1, 1)

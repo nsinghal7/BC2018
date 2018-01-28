@@ -1,5 +1,6 @@
 import battlecode as bc
 import random
+import sys
 
 MORE_THAN_MAX_MAP_DIM = 70
 
@@ -7,7 +8,9 @@ def begin_round(state):
     print("round: %d, time left: %d" % (state.gc.round(), state.gc.get_time_left_ms()))
 
 def end_round(state):
+    print("turn over starting")
     state.gc.next_turn()
+    print("turn over ending")
     sys.stdout.flush()
     sys.stderr.flush()
 

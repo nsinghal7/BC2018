@@ -154,8 +154,11 @@ def replicate_workers_phase(state):
                 print("i'm a loser")
                 pass
             index += 1
+        print("should be done with round")
         end_round(state)
         units = state.gc.units()
+        extras = []
+    print("all done")
                 
 def try_harvest(state, unit, goal):
     for direction in try_nearby_directions(goal):

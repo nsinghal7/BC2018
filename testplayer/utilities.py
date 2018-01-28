@@ -218,11 +218,10 @@ def spiral_locs(state, ml):
     dx = 0
     dy = -1
     while True:
-        if (-X/2 < x <= X/2) and (-Y/2 < y <= Y/2):
-            ax = x + ml.x
-            ay = y + ml.y
-            if 0 <= ay < len(state.kmap) and 0 <= ax < len(state.kmap[0]):
-                yield bc.MapLocation(state.planet, ax, ay)
+        ax = x + ml.x
+        ay = y + ml.y
+        if 0 <= ay < len(state.kmap) and 0 <= ax < len(state.kmap[0]):
+            yield bc.MapLocation(state.planet, ax, ay)
         if x == y or (x < 0 and x == -y) or (x > 0 and x == 1-y):
             dx, dy = -dy, dx
         x, y = x+dx, y+dy

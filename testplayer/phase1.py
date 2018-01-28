@@ -132,15 +132,14 @@ def replicate_workers_phase(state):
                 factories.append(unit)
             else:
                 units.append(unit)
-
-        stop = worker_factory_logic(state, units, extras, factories, gi, choose_attacking_units)
+        stop = process_units(state, units, extras, factories, gi, choose_attacking_units)
 
         end_round(state)
     return gi
 
 
 
-def worker_factory_logic(state, units, factories, b_info, create_type):
+def process_units(state, units, factories, b_info, create_type):
     """
     Controls workers in a general situation with the goal of building factories.
     Returns True if built a factory, else False. ASSUMES UnitQueue has been initialized for all

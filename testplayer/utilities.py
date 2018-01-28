@@ -64,8 +64,8 @@ class Destination:
     '''
     For Destination d, d[y][x] is a tuple (dir, dist) describing the optimal path from (y, x) to d
     '''
-    def __init__(self, __map__, offensive):
-        self.__map__, self.offensive = __map__, offensive
+    def __init__(self, __map__, factory = False, rocket = False):
+        self.__map__, self.factory, self.rocket = __map__, factory, rocket
     
     def __getitem__(self, key):
         return self.__map__[key] if key < len(self.__map__) else None
@@ -78,7 +78,7 @@ def out_of_bounds(point, kmap):
     return not 0 <= point.y < len(kmap) or not 0 <= point.x < len(kmap[0]) or kmap[point.y][point.x] == -1
 
 
-def make_poi(self, p, offensive = True):
+def make_poi(self, p, factory = False, rocket = False):
     result = [[None for val in row] for row in self.kmap]
     q = []
     index = 0
@@ -96,7 +96,7 @@ def make_poi(self, p, offensive = True):
         
         index += 1
     
-    self.destinations.append(Destination(result, offensive))
+    self.destinations.append(Destination(result, factory, rocket))
 
 
 class KarbCluster(Destination):
@@ -104,7 +104,7 @@ class KarbCluster(Destination):
     For KarbCluster kc, kc.karb is the amount of remaining karbonite
     '''
     def __init__(self, __map__, karb):
-        super().__init__(__map__, False)
+        super().__init__(__map__)
         self.karb = karb
 
 

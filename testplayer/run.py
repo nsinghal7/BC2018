@@ -67,9 +67,17 @@ def main_earth(self):
     self.karb_clusters, self.neighbors, self.cmap = phase0.earth_karbonite_search(self)
     self.destinations += self.karb_clusters
     try:
-        phase1.replicate_workers_phase(self)
+        b_info = phase1.replicate_workers_phase(self)
     except Exception as e:
         raise(e)
+    units, factories = [], []
+    for unit in self.gc.my_units:
+        if unit.unit_type == bc.UnitType.Factory:
+            factories.append(unit)
+        elif unit.unit_type != bc.UnitType.Rocket:
+            units.append(unit)
+    r = random.random()
+    phase1.process_units(self, units, factories, b_info, lambda: bc.UnitType.Ranger if r > .4 else bc.UnitType.Mage)
     #TODO
 
 def main_mars(self):

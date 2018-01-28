@@ -63,6 +63,9 @@ def main_earth(self):
     self.destinations = self.karb_clusters[:] # add POIs
     phase1.replicate_workers_phase(self)
     #TODO
+
+def main_mars(self):
+    pass
     
 
 if __name__ == '__main__':

@@ -83,8 +83,20 @@ def process_worker(self, worker):
     if worker.info().mode == 'random':
         worker.info().mode = 'good'
         random_worker(self, worker)
-    elif worker.info().mode == 'factory':
-        factory(self, worker)
+    #elif worker.info().mode == 'factory':
+     #   factory(self, worker)
+        
+
+def follow_path_to_cluster(self, worker):
+    loc = worker.location.map_location()
+    y, x = loc.y, loc.x
+    direc, dist = Point(0, 0), 1000
+    for cluster in self.karb_clusters:
+        if cluster[y][x][1] < dist:
+            direc, dist = cluster[y][x]
+    d = direc.to_Direction()
+    if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):
+        self.gc.move_robot(worker.id, d)
 
 
 def random_worker(self, worker):
@@ -92,7 +104,6 @@ def random_worker(self, worker):
         if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):
             self.gc.move_robot(worker.id, d)
             break
-    loc = worker.location.map_location()
     for d in list(bc.Direction):
         if harvest(self, worker, d):
             worker.info().path_to_karb = [Point(d)]
@@ -137,14 +148,14 @@ def location_out_of_karbonite(state, ml):
 def follow_path_to_karb(self, worker):
     path = worker.info().path_to_karb
     if self.gc.is_move_ready(worker.id):
-        for d in try_nearby_directions(path[0].toDirection()):
+        for d in try_nearby_directions(path[0].to_Direction()):
             if self.gc.can_move(worker.id, d):
                 self.gc.move_robot(worker.id, d)
                 path[1] = path[1] + path[0] + -Point(d)
                 if -1 <= path[1].y <= 1 and -1 <= path[1].x <= 1:
                     worker.info().path_to_karb = new_path = path[1:]
                     if len(new_path) == 1:
-                        harvest(self, worker, new_path[0].toDirection())
+                        harvest(self, worker, new_path[0].to_Direction())
                 else:
                     worker.info().path_to_karb = None
                     worker.info().mode = 'random'

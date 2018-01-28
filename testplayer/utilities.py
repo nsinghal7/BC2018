@@ -1,7 +1,18 @@
 import battlecode as bc
 import random
+import sys
 
 MORE_THAN_MAX_MAP_DIM = 70
+
+def begin_round(state):
+    print("round: %d, time left: %d" % (state.gc.round(), state.gc.get_time_left_ms()))
+
+def end_round(state):
+    print("turn over starting")
+    state.gc.next_turn()
+    print("turn over ending")
+    sys.stdout.flush()
+    sys.stderr.flush()
 
 class Point:
     
@@ -212,7 +223,7 @@ def try_nearby_directions(goal, skip_exact=False):
             yield bc.Direction(n)
             n = (n - 1) & 7
             pos = True
-    yield p
+    yield bc.Direction(p)
 
 def spiral_locs(state, ml):
     x = y = 0
@@ -243,6 +254,73 @@ class UnitInfo:
     def setup():
         bc.Unit.info = UnitInfo.access
 
+class UnitQueue:
+    """ Helps determine order of movement. When a unit has to wait on another to move,
+    make it rely on that other unit. If successful, it means that that unit's space will
+    be available after it moves. If unsuccessful, the other unit can't move or someone
+    already relies on it's space. Once all desired orderings have been made, this class
+    can iterate through them, while also setting their .initialized to False so you know to
+    reset them"""
+    first = None
+    last = None
+    def __init__(self, unit, next, can_move):
+        self.unit = unit
+        self.relied_on_by = None
+        self.next = next
+        if next is None:
+            UnitQueue.last = self
+        self.can_move = can_move
+        self.intention = intention
+        self.relies_on = False
+        self.initialized = True
+    def rely_on_if_can(self, otherUnit):
+        other = otherUnit.info().unit_queue
+        if not other.can_move:
+            return False, None
+        elif other.relied_on_by is not None:
+            return False, other.relied_on_by.unit
+        else:
+            other.relied_on_by = self
+            self.relies_on = True
+            if UnitQueue.first is self:
+                next = self
+                while next.relies_on:
+                    next = next.next
+                first = next
+            return True
+    def list(cls):
+        start = UnitQueue.first
+        next = start.next
+        while next is not None or start is not None:
+            while start is not None:
+                if start.initialized: #if not, means already went
+                    start.initialized = False
+                    yield start.unit
+                start = start.relied_on_by
+                continue
+            start = next
+            if start is not None:
+                next = start.next
+            else:
+                next = None
+    def initialize_all_units(cls, state, units):
+        next = None
+        for unit in units[::-1]:
+            # go through in reverse
+            new = UnitQueue(unit, next, state.gc.is_move_ready(unit.id))
+            unit.info().unit_queue = new
+            next = new
+        first = next
+    def initialize_new_unit(cls, state, unit):
+        new = UnitQueue(unit, None, state.gc.is_move_ready(unit.id))
+        unit.info().unit_queue = new
+        last.next = new
+        last = new
+
+
+
+
+
 
 def factory_loc_check_update(state, ml):
     destmaps = []
@@ -260,13 +338,15 @@ def factory_loc_check_update(state, ml):
         else:
             karbmaps.append(map)
     for dest, update in zip(state.destinations, destmaps):
-        _map_update(dest, update)
+        _map_update(dest, update, ml)
     for kmap, update in zip(state.karb_clusters, karbmaps):
-        _map_update(kmap, update)
+        _map_update(kmap, update, ml)
     return True
 
 
 def _map_update(map, update, ml):
+    if update is None:
+        return
     for sy in range(3):
         y = ml.y + sy - 1
         if not (0 <= y < len(map)):
@@ -306,7 +386,7 @@ def _map_check(map, ml):
                 continue
             for dx in range(-1, 2):
                 nx = x + dx
-                if 0 <= nx < len(3) and ans[ny][nx][1]:
+                if 0 <= nx < 3 and ans[ny][nx][1]:
                     ans[ny][nx] = ((Point(-dy, -dx), ans[ny][nx][0][1]), False)
                     pi -= 1
     if pi == 0:

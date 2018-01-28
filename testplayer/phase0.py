@@ -5,13 +5,12 @@ from utilities import KarbCluster
 
 
 def generate_kmap(self):
-    planet_map = self.gc.starting_map(self.planet)
     start_map = []
-    for row in range(planet_map.height):
+    for row in range(self.planet_map.height):
         map_row = []
-        for col in range(planet_map.width):
+        for col in range(self.planet_map.width):
             loc = bc.MapLocation(self.planet, col, row)
-            map_row.append(planet_map.initial_karbonite_at(loc) if planet_map.is_passable_terrain_at(loc) else -1)
+            map_row.append(self.planet_map.initial_karbonite_at(loc) if self.planet_map.is_passable_terrain_at(loc) else -1)
         start_map.append(map_row)
     return start_map
 
@@ -61,7 +60,7 @@ def find_neighbors(loc, cluster_id, gap, kmap, cmap, neighbors, directions):
 
 
 def get_clusters(cmap, kmap, num_clusters):
-    result = [([], 0) for i in range(num_clusters)]
+    result = [[[], 0] for i in range(num_clusters)]
     for y in range(len(cmap)):
         for x in range(len(cmap[0])):
             if cmap[y][x] != -1:
@@ -100,7 +99,7 @@ def find_directions_to(clusters, kmap, directions):
 
 
 def earth_karbonite_search(self):
-    kmap, directions = self.start_map, self.directions
+    kmap, directions = self.kmap, self.directions
     
     gap = 2
     num_clusters, cmap, neighbors = find_clusters(kmap, gap, directions)

@@ -2,6 +2,7 @@ from utilities import try_nearby_directions
 from utilities import Path
 from utilities import Point
 from utilities import factory_loc_check_update
+from utilities import cluster_worker_score
 from utilities import UnitQueue
 from utilities import end_round
 from utilities import process_worker
@@ -77,10 +78,11 @@ def replicate_workers_phase(state):
 
 
 
-def worker_factory_logic(state, units, extras):
+def worker_factory_logic(state, units, extras, factories):
     """
     Controls workers in a general situation with the goal of building factories.
-    Returns True if built a factory, else False
+    Returns True if built a factory, else False. ASSUMES UnitQueue has been initialized for all
+    units currently in units or extras. ASSUMES units is a list of only robots
     """
     pass
                 
@@ -104,12 +106,3 @@ def try_harvest(state, unit, goal):
             state.gc.harvest(unit.id, direction)
             return True
     return False
-
-def cluster_worker_score(ml, cluster):
-    if cluster[ml.y][ml.x] is None:
-        return -1
-    dist = cluster[ml.y][ml.x][1]
-    val = cluster.karb
-    if dist == 0:
-        return 2 * val
-    return val / dist ** 2

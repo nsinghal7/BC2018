@@ -7,11 +7,13 @@ from utilities import UnitQueue
 from utilities import end_round
 from utilities import Container
 from utilities import process_worker
+from utilities import process_attacker
+from utilities import choose_attacking_units
 import battlecode as bc
 import random
 import sys
 
-PHASE1_WORKERS_WANTED = 7
+PHASE1_WORKERS_WANTED = 5
 MIN_WORKERS = 8
 HEAT_LIMIT = 10
 FACTORY_BUILD_COST = 200
@@ -108,17 +110,21 @@ def replicate_workers_phase(state):
     gi = Container()
     gi.count = 0
     gi.prevcount = 0
+    gi.ocount = 0
+    gi.oprevcount = 0
     for unit in units:
         ui = unit.info()
         if ui.is_B_group:
             gi.count += 1
             gi.prevcount += 1
+        else:
+            gi.ocount += 1
+            gi.oprevcount += 1
     gi.target = cluster_index
     gi.factory_loc = None
-
-    while True:
+    stop = False
+    while not stop:
         allUnits = gc.my_units()
-        extras = []
         factories = []
         units = []
         for unit in allUnits:
@@ -127,9 +133,10 @@ def replicate_workers_phase(state):
             else:
                 units.append(unit)
 
-        worker_factory_logic(state, units, extras, factories, gi, lambda: bc.UnitType.Worker)
+        stop = worker_factory_logic(state, units, extras, factories, gi, choose_attacking_units)
 
         end_round(state)
+    return gi
 
 
 
@@ -166,17 +173,23 @@ def worker_factory_logic(state, units, factories, b_info, create_type):
         ml = unit.location.map_location()
         ui = unit.info()
         if unit.unit_type == bc.UnitType.Worker:
-            if b_info.prevcount < 3 and gc.karbonite() > KARBONITE_FOR_REPLICATE:
+            if b_info.prevcount < MIN_WORKERS or b_info.oprevcount < MIN_WORKERS and unit.ability_heat() < HEAT_LIMIT and  gc.karbonite() > KARBONITE_FOR_REPLICATE:
                 #panic and replicate
                 for direction in try_nearby_directions(bc.Direction.North):
                     if gc.can_replicate(unit.id, direction):
                         gc.replicate(unit.id, direction)
                         new = gc.sense_unit_at_location(ml.add(direction))
                         units.append(new)
-                        new.info().is_B_group = True
+                        if (ui.is_B_group and b_info.oprevcount >= MIN_WORKERS) or b_info.prevcount < 3:
+                            new.info().is_B_group = True
+                        elif (not ui.is_B_group and b_info.prevcount >= MIN_WORKERS) or b_info.oprevcount < 3:
+                            new.info().is_B_group = False
+                        else:
+                            new.info().is_B_group = b_info.prevcount <= b_info.oprevcount
                         break
             #continue as normal, don't replicate
             if ui.is_B_group:
+                b_info.count += 1
                 built = False
                 if b_info.factory_loc is None and len(factories) < MIN_FACTORIES and gc.karbonite() > FACTORY_BUILD_COST:
                     # try build factory 
@@ -185,7 +198,7 @@ def worker_factory_logic(state, units, factories, b_info, create_type):
                         if gc.can_blueprint(unit.id, bc.UnitType.Factory, direction) and factory_loc_check_update(nloc):
                             #must blueprint
                             gc.blueprint(unit.id, bc.UnitType.Factory, direction)
-                            b_info.factory_loc = nloc
+                            b_info.factory_loc = 
                             built = True
                             break
                 elif b_info.factory_loc is None and gc.karbonite() > ROCKET_BUILD_COST:
@@ -199,9 +212,12 @@ def worker_factory_logic(state, units, factories, b_info, create_type):
                             break
                 elif b_info.factory_loc is not None:
                     # should go to factory
-                    
-            if not ui.is_B_group or not built:
 
+            if not ui.is_B_group:
+                # should just harvest
+                process_worker(state, unit)
+        else:
+            process_attacker(state, unit)
 
 
 

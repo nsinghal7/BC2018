@@ -114,14 +114,32 @@ def earth_karbonite_search(self):
     return karb_clusters, neighbors, cmap
 
 
+def get_symmetry(self):
+    poss = [lambda p: Point(len(self.kmap) - 1 - p.y, len(self.kmap[0]) - 1 - p.x),
+            lambda p: Point(p.y, len(self.kmap[0] - 1 - p.x)),
+            lambda p: Point(len(self.kmap) - 1 - p.y, p.x),
+            lambda p: Point(p.x, p.y),
+            lambda p: Point(len(self.kmap[0] - 1 - p.x, len(self.kmap) - 1 - p.y))]
+    for y in range(len(self.kmap)):
+        for x in range(len(self.kmap[0])):
+            for i in range(len(poss)):
+                if poss[i]:
+                    p = poss[i](Point(y, x))
+                    if self.kmap[p.y][p.x] != self.kmap[y][x]:
+                        poss[i] = None
+    for s in poss:
+        if s:
+            return s
+
+
 def add_og_poi(self):
-    for unit in self.gc.my_units:
-        loc = self.symmetry(unit.location.map_location())
-        y, x = loc.y, loc.x
+    for unit in self.gc.my_units():
+        loc = unit.location.map_location()
+        p = self.symmetry(Point(loc.y, loc.x))
         flag = False
         for d in self.destinations:
-            if d[y][x] and d[y][x][1] < 5:
+            if d[p.y][p.x] and d[p.y][p.x][1] < 5:
                 flag = True
                 break
         if not flag:
-            make_poi(self, Point(y, x))
+            make_poi(self, p)

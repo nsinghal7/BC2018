@@ -37,7 +37,7 @@ def main():
     self.directions = [Point(1, 0), Point(1, 1), Point(0, 1), Point(-1, 1), Point(-1, 0), Point(-1, -1), Point(0, -1), Point(1, -1)]
     
     self.planet = self.gc.planet()
-    self.gc.starting_map(self.planet)
+    self.planet_map = self.gc.starting_map(self.planet)
     self.team = self.gc.team()
     self.asteroids = self.gc.asteroid_pattern()
     self.orbit = self.gc.orbit_pattern()

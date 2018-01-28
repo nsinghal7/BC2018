@@ -136,19 +136,20 @@ def location_out_of_karbonite(state, ml):
 
 def follow_path_to_karb(self, worker):
     path = worker.info().path_to_karb
-    for d in try_nearby_directions(path[0].toDirection()):
-        if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):
-            self.gc.move_robot(worker.id, d)
-            path[1] = path[1] + path[0] + -Point(d)
-            if -1 <= path[1].y <= 1 and -1 <= path[1].x <= 1:
-                worker.info().path_to_karb = new_path = path[1:]
-                if len(new_path) == 1:
-                    harvest(self, worker, new_path[0].toDirection())
-            else:
-                worker.info().path_to_karb = None
-                worker.info().mode = 'random'
-            return
-    worker.info().mode = 'random'
+    if self.gc.is_move_ready(worker.id):
+        for d in try_nearby_directions(path[0].toDirection()):
+            if self.gc.can_move(worker.id, d):
+                self.gc.move_robot(worker.id, d)
+                path[1] = path[1] + path[0] + -Point(d)
+                if -1 <= path[1].y <= 1 and -1 <= path[1].x <= 1:
+                    worker.info().path_to_karb = new_path = path[1:]
+                    if len(new_path) == 1:
+                        harvest(self, worker, new_path[0].toDirection())
+                else:
+                    worker.info().path_to_karb = None
+                    worker.info().mode = 'random'
+                return
+        worker.info().mode = 'random'
 
 
 '''

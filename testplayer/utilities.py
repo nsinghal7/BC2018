@@ -261,17 +261,19 @@ class UnitQueue:
     can iterate through them, while also setting their .initialized to False so you know to
     reset them"""
     first = None
-    def __init__(self, unit, next, can_move, is_first, intention = None):
+    last = None
+    def __init__(self, unit, next, can_move):
         self.unit = unit
         self.relied_on_by = None
         self.next = next
+        if next is None:
+            UnitQueue.last = self
         self.can_move = can_move
         self.intention = intention
         self.relies_on = False
         self.initialized = True
-        UnitQueue.first = self if is_first else UnitQueue.first
     def rely_on_if_can(self, otherUnit):
-        other = UnitInfo.info[otherUnit.id].unit_queue
+        other = otherUnit.info().unit_queue
         if not other.can_move:
             return False, None
         elif other.relied_on_by is not None:
@@ -300,6 +302,20 @@ class UnitQueue:
                 next = start.next
             else:
                 next = None
+    def initialize_all_units(state, units):
+        next = None
+        for unit in units[::-1]:
+            # go through in reverse
+            new = UnitQueue(unit, next, state.gc.is_move_ready(unit.id))
+            unit.info().unit_queue = new
+            next = new
+        first = next
+    def initialize_new_unit(state, unit):
+        new = UnitQueue(unit, None, state.gc.is_move_ready(unit.id))
+        unit.info().unit_queue = new
+        last.next = new
+        last = new
+
 
 
 

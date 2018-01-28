@@ -49,7 +49,7 @@ class Path:
                     a = a[:-1]
                     b = b[1:]
                 elif -1 <= d.y <= 1 and -1 <= d.x <= 1:
-                    a = a[:-1] + d
+                    a[-1] = d
                     b = b[1:]
                 else:
                     break

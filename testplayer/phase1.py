@@ -2,7 +2,6 @@ from utilities import try_nearby_directions
 from utilities import Path
 from utilities import Point
 from utilities import factory_loc_check_update
-from utilities import cluster_worker_score
 from utilities import UnitQueue
 from utilities import end_round
 from utilities import process_worker
@@ -19,13 +18,18 @@ def replicate_workers_phase(state):
     extras = []
     replicate_id = units[0].id
     cluster_index = 0
+    cluster_rest = False
     score = -1
     gc = state.gc
     for unit in units:
         for index in range(len(state.karb_clusters)):
-            ns = cluster_worker_score(unit.location.map_location(), state.karb_clusters[index])
+            ns = _cluster_worker_score(unit.location.map_location(), state.karb_clusters[index])
             if ns > score:
                 replicate_id, cluster_index, score = unit.id, index, ns
+    for row in state.cmap[::-1]:
+        for val in row:
+            print(". " if val == -1 else (str(val) + " "), end=" ")
+        print()
     for unit in units:
         unit.info().is_B_group = (unit.id == replicate_id)
 
@@ -43,10 +47,18 @@ def replicate_workers_phase(state):
 
             if ui.is_B_group:
                 goal_pt, dist = state.karb_clusters[cluster_index][ml.y][ml.x]
-                if ui.reached_cluster or goal_pt.x == goal_pt.y == 0:
+                if (not cluster_reset and ui.reached_cluster) or goal_pt.x == goal_pt.y == 0:
                     # reached cluster
                     ui.reached_cluster = True
                     process_worker(state, unit)
+                    if ui.path_to_karb is None:
+                        cluster_reset = True
+                        score = -1
+                        for index in range(len(state.karb_clusters)):
+                            ns = _cluster_worker_score(ml, state.karb_clusters[index])
+                            if ns > score:
+                                score, cluster_index = ns, index
+                        continue
                 else:
                     # en route
                     goal = None
@@ -106,3 +118,12 @@ def try_harvest(state, unit, goal):
             state.gc.harvest(unit.id, direction)
             return True
     return False
+
+def _cluster_worker_score(ml, cluster):
+    if cluster[ml.y][ml.x] is None:
+        return -1
+    dist = cluster[ml.y][ml.x][1]
+    val = cluster.karb
+    if dist == 0:
+        return 2 * val
+    return val / dist ** 2

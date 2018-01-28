@@ -31,7 +31,9 @@ def replicate_workers_phase(state):
 
     while len(units) + len(extras) < PHASE1_WORKERS_WANTED:
         index = 0
+        print("new round")
         while index < len(units) + len(extras):
+            print(len(extras))
             if index < len(units):
                 unit = units[index]
             else:
@@ -82,7 +84,7 @@ def replicate_workers_phase(state):
                         unit.info().cluster_path = factory_path #the only place you could be is the only square in the cluster
                         unit.info().cluster_dest_factory = True
                     else:
-                        unit.info().cluster_path = random.choice(neighbors).steps
+                        unit.info().cluster_path = random.choice(neighbors).steps.reverse()
                         unit.info().cluster_dest_factory = False
 
                 path = unit.info().cluster_path
@@ -96,7 +98,7 @@ def replicate_workers_phase(state):
                                 state.gc.move_robot(unit.id, direction)
                                 unit.info().prevdir = None
                                 o = direction.opposite()
-                                unit.info().cluster_path = [(o.dy(), o.dx())]
+                                unit.info().cluster_path = Point(o)
                                 moved = True
                                 break
                         if not moved and unit.info().cluster_dest_factory:
@@ -113,7 +115,7 @@ def replicate_workers_phase(state):
                                 unit.info().prevdir = direction
                                 if direction != goal:
                                     path.append(goal)
-                                    path.append(-direction)
+                                    path.append(-Point(direction))
                                 break
                         try_harvest(state, unit, direction.opposite())
                 elif path is not None:
@@ -122,10 +124,10 @@ def replicate_workers_phase(state):
 
                 if unit.ability_heat() < ABILITY_COOLDOWN_LIMIT and len(units) < PHASE1_WORKERS_WANTED and state.gc.karbonite() > KARBONITE_FOR_REPLICATE:
                     if path is None or len(path) == 0:
-                        goal = unit.info().prevdir or bc.Direction.North
+                        goal = Point(unit.info().prevdir or bc.Direction.North)
                     else:
                         goal = path[-1]
-                    for direction in try_nearby_directions(goal):
+                    for direction in try_nearby_directions(goal.to_Direction()):
                         if state.gc.can_replicate(unit.id, direction):
                             state.gc.replicate(unit.id, direction)
                             new = state.gc.sense_unit_at_location(ml.add(direction))
@@ -144,7 +146,7 @@ def replicate_workers_phase(state):
         units = state.gc.units()
                 
 def try_harvest(state, unit, goal):
-    for direction in try_nearby_directions(bc.Direction.North):
+    for direction in try_nearby_directions(goal):
         if state.gc.can_harvest(unit.id, direction):
             state.gc.harvest(unit.id, direction)
             return True

@@ -211,7 +211,7 @@ def try_nearby_directions(goal, skip_exact=False):
             yield bc.Direction(n)
             n = (n - 1) & 7
             pos = True
-    yield p
+    yield bc.Direction(p)
 
 def spiral_locs(state, ml):
     x = y = 0
@@ -259,13 +259,15 @@ def factory_loc_check_update(state, ml):
         else:
             karbmaps.append(map)
     for dest, update in zip(state.destinations, destmaps):
-        _map_update(dest, update)
+        _map_update(dest, update, ml)
     for kmap, update in zip(state.karb_clusters, karbmaps):
-        _map_update(kmap, update)
+        _map_update(kmap, update, ml)
     return True
 
 
 def _map_update(map, update, ml):
+    if update is None:
+        return
     for sy in range(3):
         y = ml.y + sy - 1
         if not (0 <= y < len(map)):
@@ -305,7 +307,7 @@ def _map_check(map, ml):
                 continue
             for dx in range(-1, 2):
                 nx = x + dx
-                if 0 <= nx < len(3) and ans[ny][nx][1]:
+                if 0 <= nx < 3 and ans[ny][nx][1]:
                     ans[ny][nx] = ((Point(-dy, -dx), ans[ny][nx][0][1]), False)
                     pi -= 1
     if pi == 0:

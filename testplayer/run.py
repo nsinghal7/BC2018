@@ -65,6 +65,8 @@ def main_earth(self):
     #TODO
 
 def main_mars(self):
+    while True:
+        self.gc.next_turn()
     pass
     
 

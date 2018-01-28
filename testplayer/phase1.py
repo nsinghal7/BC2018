@@ -46,23 +46,29 @@ def replicate_workers_phase(state):
             ui = unit.info()
             ml = unit.location.map_location()
 
-
             if ui.is_B_group:
+                print("test")
                 goal_pt, dist = state.karb_clusters[cluster_index][ml.y][ml.x]
                 if (not cluster_reset and ui.reached_cluster) or goal_pt.x == goal_pt.y == 0:
                     # reached cluster
+                    was_reset = cluster_reset
                     cluster_reset = False
                     ui.reached_cluster = True
                     process_worker(state, unit)
                     unit = gc.unit(unit.id)
-                    if ui.path_to_karb is None:
+                    if ui.path_to_karb is None and not was_reset:
                         cluster_reset = True
                         score = -1
-                        for index in range(len(state.karb_clusters)):
-                            ns = _cluster_worker_score(ml, state.karb_clusters[index])
+                        for i in range(len(state.karb_clusters)):
+                            ns = _cluster_worker_score(ml, state.karb_clusters[i])
                             if ns > score:
-                                score, cluster_index = ns, index
+                                score, cluster_index = ns, i
+                        print("reset")
                         continue
+                    else:
+                        #panic
+                        cluster_index = (cluster_index + 1) % len(state.karb_clusters)
+                        cluster_reset = True
                 else:
                     # en route
                     goal = None
@@ -75,9 +81,9 @@ def replicate_workers_phase(state):
                                 break
                     goal = goal or (-goal_pt).to_Direction()
                     try_harvest(state, unit, goal)
-
                 if len(units) + len(extras) < PHASE1_WORKERS_WANTED and gc.karbonite() > KARBONITE_FOR_REPLICATE and unit.ability_heat() < HEAT_LIMIT:
                     goal = bc.Direction.North if ui.reached_cluster else goal_pt.to_Direction() # make goal in cluster better
+                    print("im trying to replicate")
                     for direction in try_nearby_directions(goal):
                         ml = unit.location.map_location()
                         nloc = ml.add(direction)
@@ -85,6 +91,7 @@ def replicate_workers_phase(state):
                             c = len(units)
                             gc.replicate(unit.id, direction)
                             new = gc.sense_unit_at_location(nloc)
+                            new.info().is_B_group = True
                             extras.append(new)
                             break
             else:
@@ -94,7 +101,7 @@ def replicate_workers_phase(state):
             index+=1
         end_round(state)
         units = state.gc.my_units()
-        extas = []
+        extras = []
     print("all done")
 
 

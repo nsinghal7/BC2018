@@ -11,7 +11,7 @@ def end_round(state):
     print("turn over ending")
     sys.stdout.flush()
     sys.stderr.flush()
-    print("round: %d, time left: %d" % (state.gc.round(), state.gc.get_time_left_ms()))
+    print("round: %d, karb: %d, time left: %d" % (state.gc.round(), state.gc.karbonite(), state.gc.get_time_left_ms()))
 
 class Point:
     

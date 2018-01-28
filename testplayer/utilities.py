@@ -30,7 +30,7 @@ class Path:
     
     def __add__(self, path):
         if type(path) == Path:
-            
+            # TODO
         else:
             return Path(self.dest + path, self.steps + [path])
 
@@ -67,7 +67,7 @@ def harvest_cluster(self, worker):
     loc = worker.location.map_location()
     y, x = loc.y, loc.x
     if not self.kmap[y][x]:
-        
+        # TODO
 
 
 def harvest(self, worker, direction):

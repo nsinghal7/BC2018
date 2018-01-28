@@ -119,6 +119,38 @@ def process_worker(self, worker):
         random_worker(self, worker)
     #elif worker.info().mode == 'factory':
      #   factory(self, worker)
+    
+    
+def process_attacker(self, unit):
+    loc = unit.location.map_location()
+    y, x = loc.y, loc.x
+    direc, dist = Point(0, 0), 1000
+    for d in self.destinations:
+        if type(d) != KarbCluster and d[y][x][1] < dist:
+            direc, dist = d[y][x]
+    d = direc.to_Direction()
+    if self.gc.is_move_ready(unit.id) and self.gc.can_move(unit.id, d):
+        self.gc.move_robot(unit.id, d)
+        loc = loc.add(d)
+    
+    nearby = self.gc.sense_nearby_units(loc, 2)
+    attacked = False
+    for other in nearby:
+        if other.team != self.team:
+            if not attacked and self.gc.is_attack_ready(unit.id) and self.gc.can_attack(unit.id, other.id):
+                print('attacked a thing!')
+                self.gc.attack(unit.id, other.id)
+                attacked = True
+            nloc = other.location.map_location()
+            y, x = nloc.y, nloc.x
+            flag = False
+            for d in self.destinations:
+                if type(d) != KarbCluster and d[y][x] and d[y][x][1] < 5:
+                    flag = True
+                    break
+        if not flag:
+            make_poi(self, Point(y, x))
+
         
 
 def follow_path_to_cluster(self, worker):

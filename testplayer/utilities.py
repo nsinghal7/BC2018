@@ -1,4 +1,5 @@
 import battlecode as bc
+import random
 
 MORE_THAN_MAX_MAP_DIM = 70
 
@@ -70,6 +71,35 @@ class KarbCluster(Destination):
         self.karb = karb
 
 
+def process_worker(self, worker):
+    loc = worker.location.map_location()
+    y, x = loc.y, loc.x
+    if self.cmap[y][x] != -1:
+        harvest_cluster(self, worker)
+    if worker.info().path_to_karb:
+        follow_path_to_karb(self, worker)
+    else:
+        follow_path_to_cluster(self, worker)
+    if worker.info().mode == 'random':
+        worker.info().mode = 'good'
+        random_worker(self, worker)
+    elif worker.info().mode == 'factory':
+        factory(self, worker)
+
+
+def random_worker(self, worker):
+    for d in try_nearby_directions(random.choice(list(bc.Direction))):
+        if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):
+            self.gc.move_robot(worker.id, d)
+            break
+    loc = worker.location.map_location()
+    for d in list(bc.Direction):
+        if harvest(self, worker, d):
+            worker.info().path_to_karb = [Point(d)]
+            return
+    worker.info().mode = 'random'
+
+
 def location_out_of_karbonite(state, ml):
     """
     update appropriate KarbCluster to point to a neighbor, and update neighbors so this new neighbor is first.
@@ -104,6 +134,22 @@ def location_out_of_karbonite(state, ml):
     return None
 
 
+def follow_path_to_karb(self, worker):
+    path = worker.info().path_to_karb
+    for d in try_nearby_directions(path[0].toDirection()):
+        if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):
+            self.gc.move_robot(worker.id, d)
+            path[1] = path[1] + path[0] + -Point(d)
+            if -1 <= path[1].y <= 1 and -1 <= path[1].x <= 1:
+                worker.info().path_to_karb = new_path = path[1:]
+                if len(new_path) == 1:
+                    harvest(self, worker, new_path[0].toDirection())
+            else:
+                worker.info().path_to_karb = None
+                worker.info().mode = 'random'
+            return
+    worker.info().mode = 'random'
+
 
 '''
 Only call if worker is on a cluster, i.e. self.cmap[y][x] != -1
@@ -114,7 +160,9 @@ def harvest_cluster(self, worker):
     loc = worker.location.map_location()
     y, x = loc.y, loc.x
     if not self.kmap[y][x]:
-        # TODO
+        path = location_out_of_karbonite(self, loc)
+        worker.info().path_to_karb = path.steps
+        
 
 
 def harvest(self, worker, direction):
@@ -131,6 +179,9 @@ def harvest(self, worker, direction):
         amt = min(self.kmap[y][x], worker.worker_harvest_amount())
         self.kmap[y][x] -= amt
         self.karb_clusters[self.cmap[y][x]].karb -= amt
+        return True
+    else:
+        return False
     
 
 def try_nearby_directions(goal, skip_exact=False):

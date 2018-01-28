@@ -3,8 +3,18 @@ import battlecode as bc
 
 class Point:
     
-    def __init__(self, y, x):
-        self.y, self.x = y, x
+    # Ex: Point(bc.Direction.Southeast) => Point(-1, 1)
+    def __init__(self, y, x = None):
+        if x is None:
+            self.y, self.x = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (0, 0)][y.value]
+        else:
+            self.y, self.x = y, x
+    
+    # Ex: Point(-1, 1).to_Direction() => bc.Direction.Southeast
+    def to_Direction(self):
+        return [[bc.Direction.Center, bc.Direction.East, bc.Direction.West],
+                [bc.Direction.North, bc.Direction.Northeast, bc.Direction.Northwest],
+                [bc.Direction.South, bc.Direction.Southeast, bc.Direction.Southwest]][self.y][self.x]
     
     def __add__(self, p):
         return Point(self.y + p.y, self.x + p.x)
@@ -36,7 +46,13 @@ class KarbCluster(Destination):
         self.karb = karb
 
 
-def 
+def harvest(self, worker, direction):
+    self.gc.harvest(worker.id, direction)
+    loc = worker.location.map_location().add(direction)
+    y, x = loc.y, loc.x
+    amt = min(self.kmap[y][x], worker.worker_harvest_amount())
+    self.kmap[y][x] -= amt
+    self.karb_clusters[self.cmap[y][x]].karb -= amt
     
 
 def try_nearby_directions(goal, skip_exact=False):

@@ -54,7 +54,8 @@ def main_earth(self):
     # let's start off with some research!
     # we can queue as much as we want.
     self.gc.queue_research(bc.UnitType.Worker) #more harvest 25
-    self.gc.queue_research(bc.UnitType.Worker) #more build 100
+    self.gc.queue_research(bc.UnitType.Rocket) #more build 100
+    self.gc.queue_research(bc.UnitType.Worker)
     self.gc.queue_research(bc.UnitType.Mage) #more damage 125
 
     # self.karb_clusters is a list of KarbClusters

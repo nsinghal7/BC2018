@@ -12,9 +12,12 @@ import random
 import sys
 
 PHASE1_WORKERS_WANTED = 7
+MIN_WORKERS = 8
 HEAT_LIMIT = 10
 FACTORY_BUILD_COST = 200
+ROCKET_BUILD_COST = 150
 KARBONITE_FOR_REPLICATE = 60
+MIN_FACTORIES = 6
 
 def replicate_workers_phase(state):
     units = state.gc.my_units()
@@ -101,18 +104,17 @@ def replicate_workers_phase(state):
         end_round(state)
         units = state.gc.my_units()
         extras = []
-    
-    leader = True
+    #TODO: FIGURE out how to decide if new unit is in B group
     gi = Container()
+    gi.count = 0
+    gi.prevcount = 0
     for unit in units:
         ui = unit.info()
         if ui.is_B_group:
-            ui.worker_group = 0
-            ui.worker_is_leader = leader
-            leader = False
-            ui.worker_group_info = gi
+            gi.count += 1
+            gi.prevcount += 1
     gi.target = cluster_index
-    fi.factory_loc = None
+    gi.factory_loc = None
 
     while True:
         allUnits = gc.my_units()
@@ -125,18 +127,85 @@ def replicate_workers_phase(state):
             else:
                 units.append(unit)
 
-        worker_factory_logic(state, units, extras, factories)
+        worker_factory_logic(state, units, extras, factories, gi, lambda: bc.UnitType.Worker)
 
         end_round(state)
 
 
 
-def worker_factory_logic(state, units, extras, factories):
+def worker_factory_logic(state, units, factories, b_info, create_type):
     """
     Controls workers in a general situation with the goal of building factories.
     Returns True if built a factory, else False. ASSUMES UnitQueue has been initialized for all
-    units currently in units or extras. ASSUMES units is a list of only robots
+    units currently in units. ASSUMES units is a list of only robots
     """
+    gc = state.gc
+    b_info.count = 0
+    for factory in factories:
+        if not factory.structure_is_built():
+            continue
+        sg = factory.structure_garrison()
+        ml = factory.location.map_location()
+        if sg > 0:
+            for direction in try_nearby_directions(bc.Direction.North):
+                if gc.can_unload(factory.id, direction):
+                    gc.unload(factory.id, direction)
+                    new = gc.sense_unit_at_location(ml.add(direction))
+                    units.append(new)
+                    if unit.unit_type == bc.UnitType.Worker and  b_info.prevcount < MIN_WORKERS:
+                        new.info().is_B_group = True
+                    sg -= 1
+                    if sg == 0:
+                        break
+        ct = create_type()
+        if gc.can_produce_robot(factory.id, ct):
+            gc.produce_robot(factory.id, ct)
+    index = 0
+    while index < len(units):
+        unit = units[index]
+        ml = unit.location.map_location()
+        ui = unit.info()
+        if unit.unit_type == bc.UnitType.Worker:
+            if b_info.prevcount < 3 and gc.karbonite() > KARBONITE_FOR_REPLICATE:
+                #panic and replicate
+                for direction in try_nearby_directions(bc.Direction.North):
+                    if gc.can_replicate(unit.id, direction):
+                        gc.replicate(unit.id, direction)
+                        new = gc.sense_unit_at_location(ml.add(direction))
+                        units.append(new)
+                        new.info().is_B_group = True
+                        break
+            #continue as normal, don't replicate
+            if ui.is_B_group:
+                built = False
+                if b_info.factory_loc is None and len(factories) < MIN_FACTORIES and gc.karbonite() > FACTORY_BUILD_COST:
+                    # try build factory 
+                    for direction in try_nearby_directions(bc.Direction.North):
+                        nloc = ml.add(direction)
+                        if gc.can_blueprint(unit.id, bc.UnitType.Factory, direction) and factory_loc_check_update(nloc):
+                            #must blueprint
+                            gc.blueprint(unit.id, bc.UnitType.Factory, direction)
+                            b_info.factory_loc = nloc
+                            built = True
+                            break
+                elif b_info.factory_loc is None and gc.karbonite() > ROCKET_BUILD_COST:
+                    # try build rocket
+                    for direction in try_nearby_directions(bc.Direction.North):
+                        nloc = ml.add(direction)
+                        if gc.can_blueprint(unit.id, bc.UnitType.Rocket, direction):
+                            gc.blueprint(unit.id, bc.UnitType.Rocket, direction)
+                            b_info.factory_loc = nloc
+                            built = True
+                            break
+                elif b_info.factory_loc is not None:
+                    # should go to factory
+                    
+            if not ui.is_B_group or not built:
+
+
+
+
+
     
                 
 

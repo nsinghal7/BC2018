@@ -287,7 +287,7 @@ class UnitQueue:
                     next = next.next
                 first = next
             return True
-    def list():
+    def list(cls):
         start = UnitQueue.first
         next = start.next
         while next is not None or start is not None:
@@ -302,7 +302,7 @@ class UnitQueue:
                 next = start.next
             else:
                 next = None
-    def initialize_all_units(state, units):
+    def initialize_all_units(cls, state, units):
         next = None
         for unit in units[::-1]:
             # go through in reverse
@@ -310,7 +310,7 @@ class UnitQueue:
             unit.info().unit_queue = new
             next = new
         first = next
-    def initialize_new_unit(state, unit):
+    def initialize_new_unit(cls, state, unit):
         new = UnitQueue(unit, None, state.gc.is_move_ready(unit.id))
         unit.info().unit_queue = new
         last.next = new

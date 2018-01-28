@@ -103,7 +103,9 @@ def try_nearby_directions(goal, skip_exact=False):
     yield p
 
 class Container:
-    pass
+    def __getattr__(self, key):
+        self.key = None
+        return self.key
 
 class UnitInfo:
     info = {}

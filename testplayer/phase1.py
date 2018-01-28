@@ -12,6 +12,7 @@ KARBONITE_FOR_REPLICATE = 30
 
 def replicate_workers_phase(state):
     units = state.gc.units()
+    extras = []
     replicate_id = units[0].id
     cluster_index = 0
     factory_path = None
@@ -28,10 +29,13 @@ def replicate_workers_phase(state):
         unit.info().is_B_group = (unit.id == replicate_id)
         unit.info().prevdir = bc.Direction.North
 
-    while len(units) < PHASE1_WORKERS_WANTED:
+    while len(units) + len(extras) < PHASE1_WORKERS_WANTED:
         index = 0
-        while index < len(units):
-            unit = units[index]
+        while index < len(units) + len(extras):
+            if index < len(units):
+                unit = units[index]
+            else:
+                unit = extras[index - len(units)]
             ml = unit.location.map_location()
             if unit.info().is_B_group:
                 path = unit.info().cluster_path
@@ -55,7 +59,7 @@ def replicate_workers_phase(state):
                         while index < len(q):
                             current = q[index]
                             index += 1
-                            if factory_loc_check_update(state, bc.MapLocation(current.dest.x, current.dest.y)):
+                            if factory_loc_check_update(state, bc.MapLocation(state.planet, current.dest.x, current.dest.y)):
                                 # factory should be here, maps already updated
                                 factory_loc = current.dest.y, current.dest.x
                                 unit.info().cluster_path = current.steps.reverse()
@@ -130,7 +134,7 @@ def replicate_workers_phase(state):
                             ui.prevdir = direction
                             ui.cluster_path = path[:-1] if path else None
                             ui.cluster_dest_factory = unit.info().cluster_dest_factory
-                            units.append(new)
+                            extras.append(new)
                             break
             if False:#not b
                 # not B group

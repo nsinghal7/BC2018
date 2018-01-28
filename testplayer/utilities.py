@@ -103,7 +103,8 @@ def follow_path_to_cluster(self, worker):
     direc, score = Point(0, 0), 0
     for cluster in self.karb_clusters:
         if not cluster[y][x][1]:
-            direc, score = cluster[y][x][0], 1000000
+            if cluster[0]:
+                direc, score = cluster[y][x][0], 1000000
         elif cluster[0] / cluster[y][x][1] ** 2 > score:
             direc, score = cluster[y][x][0], cluster[0] / cluster[y][x][1] ** 2
     d = direc.to_Direction()
@@ -185,6 +186,8 @@ def harvest_cluster(self, worker):
     y, x = loc.y, loc.x
     if not self.kmap[y][x]:
         path = location_out_of_karbonite(self, loc)
+        if path is None:
+            return
         worker.info().path_to_karb = path.steps
         
 

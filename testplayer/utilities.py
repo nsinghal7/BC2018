@@ -91,7 +91,6 @@ def process_worker(self, worker):
     else:
         follow_path_to_cluster(self, worker)
     if worker.info().mode == 'random':
-        worker.info().mode = 'good'
         random_worker(self, worker)
     #elif worker.info().mode == 'factory':
      #   factory(self, worker)
@@ -100,10 +99,13 @@ def process_worker(self, worker):
 def follow_path_to_cluster(self, worker):
     loc = worker.location.map_location()
     y, x = loc.y, loc.x
-    direc, dist = Point(0, 0), 1000
+    direc, score = Point(0, 0), 0
     for cluster in self.karb_clusters:
-        if cluster[y][x][1] < dist:
-            direc, dist = cluster[y][x]
+        if not cluster[y][x][1]:
+            if cluster[0]:
+                direc, score = cluster[y][x][0], 1000000
+        elif cluster[0] / cluster[y][x][1] ** 2 > score:
+            direc, score = cluster[y][x][0], cluster[0] / cluster[y][x][1] ** 2
     d = direc.to_Direction()
     if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):
         self.gc.move_robot(worker.id, d)
@@ -117,8 +119,8 @@ def random_worker(self, worker):
     for d in list(bc.Direction):
         if harvest(self, worker, d):
             worker.info().path_to_karb = [Point(d)]
+            worker.info().mode = 'good'
             return
-    worker.info().mode = 'random'
 
 
 def location_out_of_karbonite(state, ml):
@@ -183,6 +185,8 @@ def harvest_cluster(self, worker):
     y, x = loc.y, loc.x
     if not self.kmap[y][x]:
         path = location_out_of_karbonite(self, loc)
+        if path is None:
+            return
         worker.info().path_to_karb = path.steps
         
 

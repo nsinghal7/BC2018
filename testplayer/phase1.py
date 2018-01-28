@@ -117,8 +117,8 @@ def replicate_workers_phase(state):
                     try_harvest(state, unit, path[-1].to_Direction())
 
                 if unit.ability_heat() < ABILITY_COOLDOWN_LIMIT and len(units) < PHASE1_WORKERS_WANTED and state.gc.karbonite() > KARBONITE_FOR_REPLICATE:
-                    if len(path) == 0:
-                        goal = unit.info().prevdir
+                    if path is None or len(path) == 0:
+                        goal = unit.info().prevdir or bc.Direction.North
                     else:
                         goal = path[-1]
                     for direction in try_nearby_directions(goal):
@@ -128,7 +128,7 @@ def replicate_workers_phase(state):
                             ui = new.info()
                             ui.is_B_group = True
                             ui.prevdir = direction
-                            ui.cluster_path = path[:-1]
+                            ui.cluster_path = path[:-1] if path else None
                             ui.cluster_dest_factory = unit.info().cluster_dest_factory
                             units.append(new)
                             break
@@ -147,6 +147,8 @@ def try_harvest(state, unit, goal):
     return False
 
 def cluster_worker_score(ml, cluster):
+    if cluster[ml.y][ml.x] is None:
+        return -1
     dist = cluster[ml.y][ml.x][1]
     val = cluster.karb
     if dist == 0:

@@ -5,15 +5,16 @@ from utilities import factory_loc_check_update
 from utilities import harvest
 from utilities import UnitQueue
 from utilities import end_round
+from utilities import Container
 from utilities import process_worker
 import battlecode as bc
 import random
 import sys
 
-PHASE1_WORKERS_WANTED = 10
+PHASE1_WORKERS_WANTED = 7
 HEAT_LIMIT = 10
-FACTORY_BUILD_COST = 100
-KARBONITE_FOR_REPLICATE = 30
+FACTORY_BUILD_COST = 200
+KARBONITE_FOR_REPLICATE = 60
 
 def replicate_workers_phase(state):
     units = state.gc.my_units()
@@ -47,7 +48,6 @@ def replicate_workers_phase(state):
             ml = unit.location.map_location()
 
             if ui.is_B_group:
-                print("test")
                 goal_pt, dist = state.karb_clusters[cluster_index][ml.y][ml.x]
                 if (not cluster_reset and ui.reached_cluster) or goal_pt.x == goal_pt.y == 0:
                     # reached cluster
@@ -56,7 +56,7 @@ def replicate_workers_phase(state):
                     ui.reached_cluster = True
                     process_worker(state, unit)
                     unit = gc.unit(unit.id)
-                    if ui.path_to_karb is None and not was_reset:
+                    if ui.mode == 'random' and not was_reset:
                         cluster_reset = True
                         score = -1
                         for i in range(len(state.karb_clusters)):
@@ -67,6 +67,7 @@ def replicate_workers_phase(state):
                         continue
                     else:
                         #panic
+                        print("panic")
                         cluster_index = (cluster_index + 1) % len(state.karb_clusters)
                         cluster_reset = True
                 else:
@@ -95,14 +96,38 @@ def replicate_workers_phase(state):
                             extras.append(new)
                             break
             else:
-                sys.stdout.flush()
                 process_worker(state, unit)
-                sys.stdout.flush()
             index+=1
         end_round(state)
         units = state.gc.my_units()
         extras = []
-    print("all done")
+    
+    leader = True
+    gi = Container()
+    for unit in units:
+        ui = unit.info()
+        if ui.is_B_group:
+            ui.worker_group = 0
+            ui.worker_is_leader = leader
+            leader = False
+            ui.worker_group_info = gi
+    gi.target = cluster_index
+    fi.factory_loc = None
+
+    while True:
+        allUnits = gc.my_units()
+        extras = []
+        factories = []
+        units = []
+        for unit in allUnits:
+            if unit.unit_type in [bc.UnitType.Factory or bc.UnitType.Rocket]:
+                factories.append(unit)
+            else:
+                units.append(unit)
+
+        worker_factory_logic(state, units, extras, factories)
+
+        end_round(state)
 
 
 
@@ -112,7 +137,7 @@ def worker_factory_logic(state, units, extras, factories):
     Returns True if built a factory, else False. ASSUMES UnitQueue has been initialized for all
     units currently in units or extras. ASSUMES units is a list of only robots
     """
-    pass
+    
                 
 
 def is_clear(state, ml):

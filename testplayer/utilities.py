@@ -110,10 +110,11 @@ def process_worker(self, worker):
     loc = worker.location.map_location()
     y, x = loc.y, loc.x
     if self.cmap[y][x] != -1:
+        worker.info().path_to_karb = None
         harvest_cluster(self, worker)
     if worker.info().path_to_karb:
         follow_path_to_karb(self, worker)
-    else:
+    elif self.cmap[y][x] == -1:
         follow_path_to_cluster(self, worker)
     if worker.info().mode == 'random':
         random_worker(self, worker)

@@ -68,6 +68,11 @@ class KarbCluster(Destination):
         super().__init__(__map__)
         self.karb = karb
 
+'''
+def process_worker(self, worker):
+    if self.cmap[y][x] == -1:
+'''
+
 
 '''
 Only call if worker is on a cluster, i.e. self.cmap[y][x] != -1

@@ -216,6 +216,7 @@ def location_out_of_karbonite(state, ml):
             nn = state.neighbors[ml.y][ml.x]
             for n in nn:
                 if (n.dest.x + n.dest.y * MORE_THAN_MAX_MAP_DIM) not in visited:
+                    visited[n.dest.x + n.dest.y * MORE_THAN_MAX_MAP_DIM] = True
                     neighbors.append(neighbors[index] + n)
         index += 1
     # shouldn't happen: cluster.karb must be 0

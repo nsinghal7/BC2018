@@ -65,7 +65,10 @@ def main_earth(self):
     phase0.add_og_poi(self)
     self.karb_clusters, self.neighbors, self.cmap = phase0.earth_karbonite_search(self)
     self.destinations += self.karb_clusters
-    phase1.replicate_workers_phase(self)
+    try:
+        phase1.replicate_workers_phase(self)
+    except Exception as e:
+        raise(e)
     #TODO
 
 def main_mars(self):

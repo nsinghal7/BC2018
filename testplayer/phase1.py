@@ -8,6 +8,7 @@ from utilities import end_round
 from utilities import process_worker
 import battlecode as bc
 import random
+import sys
 
 PHASE1_WORKERS_WANTED = 10
 HEAT_LIMIT = 10
@@ -87,7 +88,9 @@ def replicate_workers_phase(state):
                             extras.append(new)
                             break
             else:
+                sys.stdout.flush()
                 process_worker(state, unit)
+                sys.stdout.flush()
             index+=1
         end_round(state)
         units = state.gc.my_units()

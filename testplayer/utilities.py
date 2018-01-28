@@ -58,6 +58,24 @@ class KarbCluster(Destination):
         self.karb = karb
 
 
+def location_out_of_karbonite(state, ml):
+    """
+    update appropriate KarbCluster to point to a neighbor, and update neighbors so this new neighbor is first
+    """
+    cid = state.cmap[ml.y][ml.x]
+    cluster = state.karb_clusters[cid]
+    if cluster.karb == 0:
+        del state.karb_clusters[cid]
+        return
+    neighbors = [neighbor for neighbor in state.neighbors[ml.y][ml.x]] #copy so as not to edit
+    index = 0
+    while index < len(neighbors):
+        dest = neighbors[index].dest
+        if state.kmap[dest.y][dest.x] != 0:
+
+
+
+
 '''
 Only call if worker is on a cluster, i.e. self.cmap[y][x] != -1
 '''

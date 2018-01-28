@@ -253,6 +253,57 @@ class UnitInfo:
     def setup():
         bc.Unit.info = UnitInfo.access
 
+class UnitQueue:
+    """ Helps determine order of movement. When a unit has to wait on another to move,
+    make it rely on that other unit. If successful, it means that that unit's space will
+    be available after it moves. If unsuccessful, the other unit can't move or someone
+    already relies on it's space. Once all desired orderings have been made, this class
+    can iterate through them, while also setting their .initialized to False so you know to
+    reset them"""
+    first = None
+    def __init__(self, unit, next, can_move, is_first, intention = None):
+        self.unit = unit
+        self.relied_on_by = None
+        self.next = next
+        self.can_move = can_move
+        self.intention = intention
+        self.relies_on = False
+        self.initialized = True
+        UnitQueue.first = self if is_first else UnitQueue.first
+    def rely_on_if_can(self, otherUnit):
+        other = UnitInfo.info[otherUnit.id].unit_queue
+        if not other.can_move:
+            return False, None
+        elif other.relied_on_by is not None:
+            return False, other.relied_on_by.unit
+        else:
+            other.relied_on_by = self
+            self.relies_on = True
+            if UnitQueue.first is self:
+                next = self
+                while next.relies_on:
+                    next = next.next
+                first = next
+            return True
+    def list():
+        start = UnitQueue.first
+        next = start.next
+        while next is not None or start is not None:
+            while start is not None:
+                if start.initialized: #if not, means already went
+                    start.initialized = False
+                    yield start.unit
+                start = start.relied_on_by
+                continue
+            start = next
+            if start is not None:
+                next = start.next
+            else:
+                next = None
+
+
+
+
 
 def factory_loc_check_update(state, ml):
     destmaps = []

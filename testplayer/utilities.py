@@ -21,6 +21,18 @@ class Point:
     
     def __neg__(self):
         return Point(-self.y, -self.x)
+    
+
+class Path:
+    
+    def __init__(self, dest, steps = []):
+        self.dest, self.steps = dest, steps
+    
+    def __add__(self, path):
+        if type(path) == Path:
+            
+        else:
+            return Path(self.dest + path, self.steps + [path])
 
 
 class Destination:
@@ -43,13 +55,31 @@ class KarbCluster(Destination):
         self.karb = karb
 
 
-def harvest(self, worker, direction):
-    self.gc.harvest(worker.id, direction)
-    loc = worker.location.map_location().add(direction)
+'''
+Only call if worker is on a cluster, i.e. self.cmap[y][x] != -1
+'''
+def harvest_cluster(self, worker):
+    harvest(self, worker, bc.Direction.Center)
+    
+    loc = worker.location.map_location()
     y, x = loc.y, loc.x
-    amt = min(self.kmap[y][x], worker.worker_harvest_amount())
-    self.kmap[y][x] -= amt
-    self.karb_clusters[self.cmap[y][x]].karb -= amt
+    if not self.kmap[y][x]:
+        
+
+
+def harvest(self, worker, direction):
+    if self.gc.can_harvest(worker.id, direction):
+        self.gc.harvest(worker.id, direction)
+        loc = worker.location.map_location().add(direction)
+        y, x = loc.y, loc.x
+        
+        if self.kmap[y][x] > self.gc.karbonite_at(loc):
+            # OMG
+            self.kmap[y][x] = self.gc.karbonite_at(loc)
+        
+        amt = min(self.kmap[y][x], worker.worker_harvest_amount())
+        self.kmap[y][x] -= amt
+        self.karb_clusters[self.cmap[y][x]].karb -= amt
     
 
 def try_nearby_directions(goal, skip_exact=False):

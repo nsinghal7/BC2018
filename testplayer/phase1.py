@@ -27,7 +27,7 @@ def replicate_workers_phase(state):
         unit.info().is_B_group = (unit.id == replicate_id)
 
     while len(units) + len(extras) < PHASE1_WORKERS_WANTED:
-
+        
         end_round(state)
         units = state.gc.units()
         extas = []

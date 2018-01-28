@@ -31,10 +31,11 @@ def replicate_workers_phase(state):
     while len(units) < PHASE1_WORKERS_WANTED:
         index = 0
         while index < len(units) + len(extras):
-            if index < len(units):
+            lu = len(units)
+            if index < lu:
                 unit = units[index]
             else:
-                unit = extras[index]
+                unit = extras[index - lu]
             ui = unit.info()
             ml = unit.location.map_location()
 
@@ -47,11 +48,15 @@ def replicate_workers_phase(state):
                     process_worker(state, unit)
                 else:
                     # en route
+                    goal = None
                     if gc.is_move_ready(unit.id):
                         for direction in try_nearby_directions(goal_pt.to_Direction()):
                             if gc.can_move(unit.id, direction):
                                 gc.move_robot(unit.id, direction)
+                                goal = direction.opposite()
                                 break
+                    goal = goal or goal_pt.opposite()
+                    try_harvest(state, unit, goal)
 
                 if len(units) + len(extras) < PHASE1_WORKERS_WANTED and gc.karbonite() > KARBONITE_FOR_REPLICATE and unit.ability_heat() < HEAT_LIMIT:
                     goal = bc.Direction.North if ui.reached_cluster else goal_pt.to_Direction() # make goal in cluster better
@@ -64,7 +69,7 @@ def replicate_workers_phase(state):
                             break
             else:
                 process_worker(state, unit)
-            index++
+            index+=1
         end_round(state)
         units = state.gc.units()
         extas = []

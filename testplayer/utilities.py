@@ -21,7 +21,10 @@ class Destination:
         self.__map__ = __map__
     
     def __getitem__(self, key):
-        return self.__map__[key]
+        return self.__map__[key] if key < len(self.__map__) else None
+
+    def __len__(self):
+        return len(self.__map__)
 
 
 class KarbCluster(Destination):
@@ -69,4 +72,77 @@ class UnitInfo:
 
 
 def factory_loc_check_update(state, ml):
-    
+    destmaps = []
+    karbmaps = []
+    for dest in state.destinations:
+        worked, map = _map_check(dest, ml)
+        if not worked:
+            return False
+        else:
+            destmaps.append(map)
+    for kmap in state.karb_clusters:
+        worked, map = _map_check(kmap, ml)
+        if not worked:
+            return False
+        else:
+            karbmaps.append(map)
+    for dest, update in zip(state.destinations, destmaps):
+        _map_update(dest, update)
+    for kmap, update in zip(state.karb_clusters, karbmaps):
+        _map_update(kmap, update)
+    return True
+
+
+def _map_update(map, update, ml):
+    for sy in range(3):
+        y = ml.y + sy - 1
+        if not (0 <= y < len(map)):
+            continue
+        for sx in range(3):
+            x = ml.x + sx - 1
+            if 0 <= x < len(map[0]):
+                map[y][x] = update[sy][sx][0]
+
+
+def _map_check(map, ml):
+    ans = [[map[y][x] for x in range(ml.x - 1, ml.x + 2)] for y in range(ml.y - 1, ml.y + 2)]
+    q = []
+    pi = 0
+    blocked = 0
+
+    for y in range(3):
+        for x in range(3):
+            if ans[y][x] is None or y == x == 1:
+                blocked += 1
+                ans[y][x] = (ans[y][x], None)
+            elif _points_in(y, x, ans[y][x][0]):
+                pi += 1
+                ans[y][x] = (ans[y][x], True)
+            else:
+                q.append((y, x))
+                ans[y][x] = (ans[y][x], False)
+    if pi == 0:
+        return True, None
+    index = 0
+    while index < len(q) and pi > 0:
+        y, x = q[index]
+        index += 1
+        for dy in range(-1, 2):
+            ny = y + dy
+            if not (0 <= ny < 3):
+                continue
+            for dx in range(-1, 2):
+                nx = x + dx
+                if 0 <= nx < len(3) and ans[ny][nx][1]:
+                    ans[ny][nx] = ((Point(-dy, -dx), ans[ny][nx][0][1]), False)
+                    pi -= 1
+    if pi == 0:
+        return True, ans
+    else:
+        return False, None
+
+
+
+
+def _points_in(y, x, point):
+    return point.y == (1-y) and point.x == (1-x)

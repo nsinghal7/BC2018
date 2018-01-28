@@ -127,13 +127,13 @@ def replicate_workers_phase(state):
             else:
                 units.append(unit)
 
-        worker_factory_logic(state, units, extras, factories, gi, lambda: bc.UnitType.Worker)
+        process_units(state, units, extras, factories, gi, lambda: bc.UnitType.Worker)
 
         end_round(state)
 
 
 
-def worker_factory_logic(state, units, factories, b_info, create_type):
+def process_units(state, units, factories, b_info, create_type):
     """
     Controls workers in a general situation with the goal of building factories.
     Returns True if built a factory, else False. ASSUMES UnitQueue has been initialized for all

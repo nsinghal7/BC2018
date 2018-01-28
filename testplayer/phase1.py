@@ -2,6 +2,7 @@ from utilities import try_nearby_directions
 from utilities import Path
 from utilities import Point
 from utilities import factory_loc_check_update
+from utilities import harvest
 from utilities import UnitQueue
 from utilities import end_round
 from utilities import process_worker
@@ -18,7 +19,7 @@ def replicate_workers_phase(state):
     extras = []
     replicate_id = units[0].id
     cluster_index = 0
-    cluster_rest = False
+    cluster_reset = False
     score = -1
     gc = state.gc
     for unit in units:
@@ -49,6 +50,7 @@ def replicate_workers_phase(state):
                 goal_pt, dist = state.karb_clusters[cluster_index][ml.y][ml.x]
                 if (not cluster_reset and ui.reached_cluster) or goal_pt.x == goal_pt.y == 0:
                     # reached cluster
+                    cluster_reset = False
                     ui.reached_cluster = True
                     process_worker(state, unit)
                     if ui.path_to_karb is None:
@@ -74,10 +76,11 @@ def replicate_workers_phase(state):
                 if len(units) + len(extras) < PHASE1_WORKERS_WANTED and gc.karbonite() > KARBONITE_FOR_REPLICATE and unit.ability_heat() < HEAT_LIMIT:
                     goal = bc.Direction.North if ui.reached_cluster else goal_pt.to_Direction() # make goal in cluster better
                     for direction in try_nearby_directions(goal):
-                        if gc.can_replicate(unit.id, direction):
+                        ml = unit.location.map_location()
+                        nloc = ml.add(direction)
+                        if  state.planet_map.on_map(nloc) and  gc.can_replicate(unit.id, direction):
                             gc.replicate(unit.id, direction)
-                            ml = unit.location.map_location()
-                            new = gc.sense_unit_at_location(ml.add(direction))
+                            new = gc.sense_unit_at_location(nloc)
                             extras.append(new)
                             break
             else:
@@ -114,8 +117,7 @@ def is_clear(state, ml):
 
 def try_harvest(state, unit, goal):
     for direction in try_nearby_directions(goal):
-        if state.gc.can_harvest(unit.id, direction):
-            state.gc.harvest(unit.id, direction)
+        if harvest(state, unit, direction):
             return True
     return False
 

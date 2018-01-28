@@ -60,8 +60,10 @@ def main_earth(self):
     # self.karb_clusters is a list of KarbClusters
     # self.neighbors[row][col] is a list of Paths to nearby karbonite within a cluster
     # self.cmap[row][col] is a cluster id, 0 <= id < len(self.karb_clusters), or -1 if (row, col) is not part of a cluster
+    self.destinations = []
+    phase0.add_og_poi(self)
     self.karb_clusters, self.neighbors, self.cmap = phase0.earth_karbonite_search(self)
-    self.destinations = self.karb_clusters[:] # add POIs
+    self.destinations += self.karb_clusters
     phase1.replicate_workers_phase(self)
     #TODO
 

@@ -2,6 +2,7 @@ import battlecode as bc
 from utilities import Point
 from utilities import Path
 from utilities import KarbCluster
+from utilities import make_poi
 
 
 def generate_kmap(self):
@@ -111,3 +112,16 @@ def earth_karbonite_search(self):
     karb_clusters = find_directions_to(clusters, kmap, directions)
     
     return karb_clusters, neighbors, cmap
+
+
+def add_og_poi(self):
+    for unit in self.gc.my_units:
+        loc = self.symmetry(unit.location.map_location())
+        y, x = loc.y, loc.x
+        flag = False
+        for d in self.destinations:
+            if d[y][x] and d[y][x][1] < 5:
+                flag = True
+                break
+        if not flag:
+            make_poi(self, Point(y, x))

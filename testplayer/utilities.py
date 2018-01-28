@@ -72,6 +72,31 @@ class Destination:
         return len(self.__map__)
 
 
+def out_of_bounds(point, kmap):
+    return not 0 <= point.y < len(kmap) or not 0 <= point.x < len(kmap[0]) or kmap[point.y][point.x] == -1
+
+
+def make_poi(self, p):
+    result = [[None for val in row] for row in self.kmap]
+    q = []
+    index = 0
+    q.append((p, 0))
+    result[p.y][p.x] = Point(0, 0), 0
+    
+    while index < len(q):
+        dest, dist = q[index]
+        
+        for d in self.directions:
+            new = dest + d
+            if not out_of_bounds(new, self.kmap) and result[new.y][new.x] is None:
+                result[new.y][new.x] = -d, dist + 1
+                q.append((new, dist + 1))
+        
+        index += 1
+    
+    self.destinations.append(Destination(result))
+
+
 class KarbCluster(Destination):
     '''
     For KarbCluster kc, kc.karb is the amount of remaining karbonite
@@ -102,9 +127,9 @@ def follow_path_to_cluster(self, worker):
     direc, score = Point(0, 0), 0
     for cluster in self.karb_clusters:
         if not cluster[y][x][1]:
-            if cluster[0]:
+            if cluster[y][x][0]:
                 direc, score = cluster[y][x][0], 1000000
-        elif cluster[0] / cluster[y][x][1] ** 2 > score:
+        elif cluster[y][x][0] / cluster[y][x][1] ** 2 > score:
             direc, score = cluster[y][x][0], cluster[0] / cluster[y][x][1] ** 2
     d = direc.to_Direction()
     if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):

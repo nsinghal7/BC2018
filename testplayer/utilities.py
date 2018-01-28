@@ -126,14 +126,21 @@ def follow_path_to_cluster(self, worker):
     y, x = loc.y, loc.x
     direc, score = Point(0, 0), 0
     for cluster in self.karb_clusters:
-        if not cluster[y][x][1]:
-            if cluster[y][x][0]:
-                direc, score = cluster[y][x][0], 1000000
-        elif cluster[y][x][0] / cluster[y][x][1] ** 2 > score:
-            direc, score = cluster[y][x][0], cluster[0] / cluster[y][x][1] ** 2
+        s = cluster_worker_score(loc, cluster[y][x])
+        if s > score:
+            direc, score = cluster[y][x][0], s
     d = direc.to_Direction()
     if self.gc.is_move_ready(worker.id) and self.gc.can_move(worker.id, d):
         self.gc.move_robot(worker.id, d)
+
+def cluster_worker_score(ml, cluster):
+    if cluster[ml.y][ml.x] is None:
+        return -1
+    dist = cluster[ml.y][ml.x][1]
+    val = cluster.karb
+    if dist == 0:
+        return float('inf') if cluster.karb else 0
+    return val / dist ** 2
 
 
 def random_worker(self, worker):

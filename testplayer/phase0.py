@@ -116,10 +116,10 @@ def earth_karbonite_search(self):
 
 def get_symmetry(self):
     poss = [lambda p: Point(len(self.kmap) - 1 - p.y, len(self.kmap[0]) - 1 - p.x),
-            lambda p: Point(p.y, len(self.kmap[0] - 1 - p.x)),
+            lambda p: Point(p.y, len(self.kmap[0]) - 1 - p.x),
             lambda p: Point(len(self.kmap) - 1 - p.y, p.x),
             lambda p: Point(p.x, p.y),
-            lambda p: Point(len(self.kmap[0] - 1 - p.x, len(self.kmap) - 1 - p.y))]
+            lambda p: Point(len(self.kmap[0]) - 1 - p.x, len(self.kmap) - 1 - p.y)]
     for y in range(len(self.kmap)):
         for x in range(len(self.kmap[0])):
             for i in range(len(poss)):

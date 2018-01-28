@@ -30,7 +30,18 @@ class Path:
     
     def __add__(self, path):
         if type(path) == Path:
-            
+            a, b = self.steps[:], path.steps[:]
+            while a and b:
+                d = a[-1] + b[0]
+                if not d.y and not d.x:
+                    a = a[:-1]
+                    b = b[1:]
+                elif -1 <= d.y <= 1 and -1 <= d.x <= 1:
+                    a = a[:-1] + d
+                    b = b[1:]
+                else:
+                    break
+            return Path(path.dest, a + b)
         else:
             return Path(self.dest + path, self.steps + [path])
 
@@ -85,7 +96,7 @@ def harvest_cluster(self, worker):
     loc = worker.location.map_location()
     y, x = loc.y, loc.x
     if not self.kmap[y][x]:
-        
+        # TODO
 
 
 def harvest(self, worker, direction):
@@ -96,6 +107,7 @@ def harvest(self, worker, direction):
         
         if self.kmap[y][x] > self.gc.karbonite_at(loc):
             # OMG
+            self.karb_clusters[self.cmap[y][x]].karb -= self.kmap[y][x] - self.gc.karbonite_at(loc)
             self.kmap[y][x] = self.gc.karbonite_at(loc)
         
         amt = min(self.kmap[y][x], worker.worker_harvest_amount())

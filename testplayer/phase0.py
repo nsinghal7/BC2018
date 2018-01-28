@@ -111,4 +111,4 @@ def earth_karbonite_search(self):
     clusters = get_clusters(cmap, kmap, num_clusters)
     karb_clusters = find_directions_to(clusters, kmap, directions)
     
-    return karb_clusters, neighbors
+    return karb_clusters, neighbors, cmap

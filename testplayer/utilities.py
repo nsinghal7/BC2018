@@ -149,6 +149,7 @@ def random_worker(self, worker):
             self.gc.move_robot(worker.id, d)
             break
     for d in list(bc.Direction):
+        worker = self.gc.unit(worker.id)
         if harvest(self, worker, d):
             worker.info().path_to_karb = [Point(d)]
             worker.info().mode = 'good'
@@ -196,6 +197,7 @@ def follow_path_to_karb(self, worker):
         for d in try_nearby_directions(path[0].to_Direction()):
             if self.gc.can_move(worker.id, d):
                 self.gc.move_robot(worker.id, d)
+                worker = self.gc.unit(worker.id)
                 if len(path) == 1:
                     path[0] = path[0] + -Point(d)
                     if -1 <= path[0].y <= 1 and -1 <= path[0].x <= 1:

@@ -53,6 +53,7 @@ def replicate_workers_phase(state):
                     cluster_reset = False
                     ui.reached_cluster = True
                     process_worker(state, unit)
+                    unit = gc.unit(unit.id)
                     if ui.path_to_karb is None:
                         cluster_reset = True
                         score = -1
@@ -68,9 +69,10 @@ def replicate_workers_phase(state):
                         for direction in try_nearby_directions(goal_pt.to_Direction()):
                             if gc.can_move(unit.id, direction):
                                 gc.move_robot(unit.id, direction)
+                                unit = gc.unit(unit.id)
                                 goal = direction.opposite()
                                 break
-                    goal = goal or goal_pt.opposite()
+                    goal = goal or (-goal_pt).to_Direction()
                     try_harvest(state, unit, goal)
 
                 if len(units) + len(extras) < PHASE1_WORKERS_WANTED and gc.karbonite() > KARBONITE_FOR_REPLICATE and unit.ability_heat() < HEAT_LIMIT:

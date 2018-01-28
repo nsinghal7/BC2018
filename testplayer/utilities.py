@@ -1,5 +1,6 @@
 import battlecode as bc
 
+MORE_THAN_MAX_MAP_DIM = 70
 
 class Point:
     
@@ -72,6 +73,41 @@ class KarbCluster(Destination):
 def process_worker(self, worker):
     if self.cmap[y][x] == -1:
 '''
+
+
+def location_out_of_karbonite(state, ml):
+    """
+    update appropriate KarbCluster to point to a neighbor, and update neighbors so this new neighbor is first.
+    Returns the path to take to the nearest neighbor, or None if the cluster is empty
+    """
+    cid = state.cmap[ml.y][ml.x]
+    cluster = state.karb_clusters[cid]
+    if cluster.karb <= 0:
+        return None #karbcluster empty
+    neighbors = [neighbor for neighbor in state.neighbors[ml.y][ml.x]] #copy so as not to edit
+    visited = {}
+    orig = len(neighbors)
+    index = 0
+    while index < len(neighbors):
+        dest = neighbors[index].dest
+        if state.kmap[dest.y][dest.x] != 0:
+            if index >= orig:
+                # need to add to neighbors
+                state.neighbors[ml.y][ml.x].insert(0, neighbors[index])
+            loc = Point(ml.y, ml.x)
+            for step in neighbors[index].steps:
+                cluster[loc.y][loc.x] = step, cluster[loc.y][loc.x][1]
+                loc = loc + step
+            return neighbors[index]
+        else:
+            nn = state.neighbors[ml.y][ml.x]
+            for n in nn:
+                if (n.dest.x + n.dest.y * MORE_THAN_MAX_MAP_DIM) not in visited:
+                    neighbors.append(neighbors[index] + n)
+    # shouldn't happen: cluster.karb must be 0
+    cluster.karb = 0
+    return None
+
 
 
 '''

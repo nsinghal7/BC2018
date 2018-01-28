@@ -15,7 +15,7 @@ FACTORY_BUILD_COST = 100
 KARBONITE_FOR_REPLICATE = 30
 
 def replicate_workers_phase(state):
-    units = state.gc.units()
+    units = state.gc.my_units()
     extras = []
     replicate_id = units[0].id
     cluster_index = 0
@@ -78,7 +78,8 @@ def replicate_workers_phase(state):
                     for direction in try_nearby_directions(goal):
                         ml = unit.location.map_location()
                         nloc = ml.add(direction)
-                        if  state.planet_map.on_map(nloc) and  gc.can_replicate(unit.id, direction):
+                        if  gc.can_replicate(unit.id, direction):
+                            c = len(units)
                             gc.replicate(unit.id, direction)
                             new = gc.sense_unit_at_location(nloc)
                             extras.append(new)
@@ -87,7 +88,7 @@ def replicate_workers_phase(state):
                 process_worker(state, unit)
             index+=1
         end_round(state)
-        units = state.gc.units()
+        units = state.gc.my_units()
         extas = []
     print("all done")
 

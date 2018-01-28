@@ -238,7 +238,6 @@ def harvest(self, worker, direction):
         self.gc.harvest(worker.id, direction)
         loc = worker.location.map_location().add(direction)
         y, x = loc.y, loc.x
-        
         if self.kmap[y][x] > self.gc.karbonite_at(loc):
             # OMG
             self.karb_clusters[self.cmap[y][x]].karb -= self.kmap[y][x] - self.gc.karbonite_at(loc)

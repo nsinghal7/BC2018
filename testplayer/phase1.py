@@ -2,13 +2,14 @@ from utilities import try_nearby_directions
 from utilities import Path
 from utilities import Point
 from utilities import factory_loc_check_update
-from utilities import begin_round
+from utilities import UnitQueue
 from utilities import end_round
+from utilities import process_worker
 import battlecode as bc
 import random
 
 PHASE1_WORKERS_WANTED = 10
-ABILITY_COOLDOWN_LIMIT = 10
+HEAT_LIMIT = 10
 FACTORY_BUILD_COST = 100
 KARBONITE_FOR_REPLICATE = 30
 
@@ -18,6 +19,7 @@ def replicate_workers_phase(state):
     replicate_id = units[0].id
     cluster_index = 0
     score = -1
+    gc = state.gc
     for unit in units:
         for index in range(len(state.karb_clusters)):
             ns = cluster_worker_score(unit.location.map_location(), state.karb_clusters[index])
@@ -26,11 +28,56 @@ def replicate_workers_phase(state):
     for unit in units:
         unit.info().is_B_group = (unit.id == replicate_id)
 
-    while len(units) + len(extras) < PHASE1_WORKERS_WANTED:
-        
+    while len(units) < PHASE1_WORKERS_WANTED:
+        index = 0
+        while index < len(units) + len(extras):
+            if index < len(units):
+                unit = units[index]
+            else:
+                unit = extras[index]
+            ui = unit.info()
+            ml = unit.location.map_location()
+
+
+            if ui.is_B_group:
+                goal_pt, dist = state.karb_clusters[cluster_index][ml.y][ml.x]
+                if ui.reached_cluster or goal_pt.x == goal_pt.y == 0:
+                    # reached cluster
+                    ui.reached_cluster = True
+                    process_worker(state, unit)
+                else:
+                    # en route
+                    if gc.is_move_ready(unit.id):
+                        for direction in try_nearby_directions(goal_pt.to_Direction()):
+                            if gc.can_move(unit.id, direction):
+                                gc.move_robot(unit.id, direction)
+                                break
+
+                if len(units) + len(extras) < PHASE1_WORKERS_WANTED and gc.karbonite() > KARBONITE_FOR_REPLICATE and unit.ability_heat() < HEAT_LIMIT:
+                    goal = bc.Direction.North if ui.reached_cluster else goal_pt.to_Direction() # make goal in cluster better
+                    for direction in try_nearby_directions(goal):
+                        if gc.can_replicate(unit.id, direction):
+                            gc.replicate(unit.id, direction)
+                            ml = unit.location.map_location()
+                            new = gc.sense_unit_at_location(ml.add(direction))
+                            extras.append(new)
+                            break
+            else:
+                process_worker(state, unit)
+            index++
         end_round(state)
         units = state.gc.units()
         extas = []
+    print("all done")
+
+
+
+def worker_factory_logic(state, units, extras):
+    """
+    Controls workers in a general situation with the goal of building factories.
+    Returns True if built a factory, else False
+    """
+    pass
                 
 
 def is_clear(state, ml):

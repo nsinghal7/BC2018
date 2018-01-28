@@ -1,6 +1,7 @@
 from utilities import try_nearby_directions
 from utilities import Path
 from utilities import Point
+from utilities import factory_loc_check_update
 import battlecode as bc
 import random
 
@@ -43,7 +44,7 @@ def replicate_workers_phase(state):
                                 state.gc.move_robot(unit.id, direction)
                                 unit.info().prevdir = direction
                                 break
-                    try_harvest(unit, (-goal).to_Direction())
+                    try_harvest(state, unit, (-goal).to_Direction())
                 elif path is None:
                     # is there, but hasn't chosen path yet
                     neighbors = state.neighbors[ml.y][ml.x]
@@ -69,7 +70,8 @@ def replicate_workers_phase(state):
                                 for dx in range(-1, 2):
                                     x = current.dest.x + dx
                                     if 0 <= x < len(state.kmap[0]):
-                                        q.append(current + Point(dy, dx))
+                                        if state.kmap[y][x] != -1:
+                                            q.append(current + Point(dy, dx))
                         if factory_loc is None:
                             raise Exception("There is absolutely nowhere to put a factory that doesn't ruin things")
                     elif len(neighbors) == 0:
@@ -96,7 +98,7 @@ def replicate_workers_phase(state):
                         if not moved and unit.info().cluster_dest_factory:
                             stuck = True
                         #harvest goal location or nearby
-                        try_harvest(unit, o)
+                        try_harvest(state, unit, o)
                     elif stuck:
                         unit.info().is_B_group = False
                     else:
@@ -106,12 +108,13 @@ def replicate_workers_phase(state):
                                 state.gc.move_robot(unit.id, direction)
                                 unit.info().prevdir = direction
                                 if direction != goal:
-                                    path.append(-goal)
+                                    path.append(goal)
+                                    path.append(-direction)
                                 break
-                        try_harvest(unit, direction.opposite())
+                        try_harvest(state, unit, direction.opposite())
                 elif path is not None:
                     # harvest in factory after passing it
-                    try_harvest(unit, path[-1].to_Direction())
+                    try_harvest(state, unit, path[-1].to_Direction())
 
                 if unit.ability_heat() < ABILITY_COOLDOWN_LIMIT and len(units) < PHASE1_WORKERS_WANTED and state.gc.karbonite() > KARBONITE_FOR_REPLICATE:
                     if len(path) == 0:
@@ -129,14 +132,14 @@ def replicate_workers_phase(state):
                             ui.cluster_dest_factory = unit.info().cluster_dest_factory
                             units.append(new)
                             break
-            else:
+            if False:#not b
                 # not B group
                 pass
             index += 1
         state.gc.next_turn()
         units = state.gc.units()
                 
-def try_harvest(unit, goal):
+def try_harvest(state, unit, goal):
     for direction in try_nearby_directions(bc.Direction.North):
         if state.gc.can_harvest(unit.id, direction):
             state.gc.harvest(unit.id, direction)

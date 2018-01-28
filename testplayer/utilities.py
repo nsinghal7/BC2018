@@ -185,6 +185,7 @@ def location_out_of_karbonite(state, ml):
             for n in nn:
                 if (n.dest.x + n.dest.y * MORE_THAN_MAX_MAP_DIM) not in visited:
                     neighbors.append(neighbors[index] + n)
+        index += 1
     # shouldn't happen: cluster.karb must be 0
     cluster.karb = 0
     return None
@@ -224,7 +225,6 @@ Only call if worker is on a cluster, i.e. self.cmap[y][x] != -1
 '''
 def harvest_cluster(self, worker):
     harvest(self, worker, bc.Direction.Center)
-    
     loc = worker.location.map_location()
     y, x = loc.y, loc.x
     if not self.kmap[y][x]:

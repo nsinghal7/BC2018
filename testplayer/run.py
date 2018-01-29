@@ -10,6 +10,8 @@ from utilities import Point
 from utilities import KarbCluster
 from utilities import Container
 from utilities import UnitInfo
+from utilities import try_nearby_directions
+from utilities import end_round
 
 import os
 
@@ -82,7 +84,7 @@ def main_earth(self):
                 else:
                     nearby = self.gc.sense_nearby_units(unit.location.map_location(), 2)
                     for other in nearby:
-                        if self.gc.can_load(unit.id, other.id):
+                        if self.gc.can_load(unit.id, other.id) and (other.unit_type != bc.UnitType.Worker or random.random() < .05):
                             self.gc.load(unit.id, other.id)
                     if len(unit.structure_garrison()) >= unit.structure_max_capacity() - 4:
                         x, y = (int)(random.random() * self.mars_map.width), (int)(random.random() * self.mars_map.height)
@@ -100,17 +102,44 @@ def main_earth(self):
                         self.gc.launch_rocket(unit.id, loc)
             r = random.random()
             phase1.process_units(self, units, factories, b_info, lambda: bc.UnitType.Ranger if r > .4 else bc.UnitType.Mage)
-            self.gc.next_turn()
+            end_round(self)
         except Exception as e:
             print("help: " + str(e))
-            self.gc.next_turn()
+            end_round(self)
             pass
     #TODO
 
 def main_mars(self):
+    print("hello!")
+    self.destinations = []
+    self.karb_clusters, self.neighbors, self.cmap = phase0.earth_karbonite_search(self)
+    self.destinations += self.karb_clusters
+    self.mars_map = self.gc.starting_map(bc.Planet.Mars)
+    gi = Container()
+    gi.count = 0
+    gi.prevcount = 0
+    gi.ocount = 0
+    gi.oprevcount = 0
+    gi.target = 0
+    gi.factory_loc = 0
+    b_info = gi
     while True:
-        self.gc.next_turn()
-    pass
+        try:
+            units, factories = [], []
+            for unit in self.gc.my_units():
+                if unit.unit_type != bc.UnitType.Rocket:
+                    units.append(unit)
+                else:
+                    for d in try_nearby_directions(bc.Direction.North):
+                        if self.gc.can_unload(unit.id, d):
+                            self.gc.unload(unit.id, d)
+            r = random.random()
+            phase1.process_units(self, units, factories, b_info, lambda: bc.UnitType.Ranger if r > .4 else bc.UnitType.Mage)
+            end_round(self)
+        except Exception as e:
+            print("help: " + str(e))
+            end_round(self)
+            pass
     
 
 if __name__ == '__main__':

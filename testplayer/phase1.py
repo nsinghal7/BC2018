@@ -38,6 +38,7 @@ def replicate_workers_phase(state):
     for unit in units:
         unit.info().is_B_group = (unit.id == replicate_id)
 
+    emergency_set_b = False
     while len(units) < PHASE1_WORKERS_WANTED:
         index = 0
         while index < len(units) + len(extras):
@@ -49,7 +50,16 @@ def replicate_workers_phase(state):
             ui = unit.info()
             ml = unit.location.map_location()
 
+            if emergency_set_b:
+                ui.is_B_group = True
+                emergency_set_b = False
+
             if ui.is_B_group:
+                if not state.karb_clusters[cluster_index][ml.y][ml.x]:
+                    ui.is_B_group = False
+                    emergency_set_b = True
+                    index += 1
+                    continue
                 goal_pt, dist = state.karb_clusters[cluster_index][ml.y][ml.x]
                 if (not cluster_reset and ui.reached_cluster) or goal_pt.x == goal_pt.y == 0:
                     # reached cluster
@@ -171,6 +181,7 @@ def process_units(state, units, factories, b_info, create_type):
             gc.produce_robot(factory.id, ct)
     index = 0
     while index < len(units):
+        print(index)
         moved = False
         unit = units[index]
         if unit.location.is_in_garrison():
@@ -179,7 +190,6 @@ def process_units(state, units, factories, b_info, create_type):
         ml = unit.location.map_location()
         ui = unit.info()
         if unit.unit_type == bc.UnitType.Worker:
-            print("control worker")
             if (b_info.prevcount < MIN_WORKERS or b_info.oprevcount < MIN_WORKERS) and unit.ability_heat() < HEAT_LIMIT and  gc.karbonite() > KARBONITE_FOR_REPLICATE:
                 #panic and replicate
                 print("REPLICATING: %d %d" % (b_info.prevcount, b_info.oprevcount))
@@ -264,6 +274,7 @@ def process_units(state, units, factories, b_info, create_type):
                                     break
                     try_harvest(state, unit, bc.Direction.North)
                 if not built and b_info.factory_loc is None:
+                    print("tset")
                     # go to cluster or switch B cluster
                     cluster = state.karb_clusters[b_info.target]
                     if cluster.karb > 0 and cluster[ml.y][ml.x] is not None:
@@ -312,7 +323,6 @@ def process_units(state, units, factories, b_info, create_type):
                 # should just harvest
                 process_worker(state, unit)
         else:
-            print("control attacker")
             process_attacker(state, unit)
         index += 1
     return ans

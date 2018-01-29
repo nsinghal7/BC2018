@@ -120,6 +120,8 @@ def get_symmetry(self):
             lambda p: Point(len(self.kmap) - 1 - p.y, p.x),
             lambda p: Point(p.x, p.y),
             lambda p: Point(len(self.kmap[0]) - 1 - p.x, len(self.kmap) - 1 - p.y)]
+    if len(self.kmap) != len(self.kmap[0]):
+        poss = poss[:-2]
     for y in range(len(self.kmap)):
         for x in range(len(self.kmap[0])):
             for i in range(len(poss)):

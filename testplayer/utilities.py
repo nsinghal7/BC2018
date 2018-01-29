@@ -126,28 +126,35 @@ def process_worker(self, worker):
     
     
 def process_attacker(self, unit):
+    if not unit or unit.unit_type in [bc.UnitType.Worker, bc.UnitType.Factory, bc.UnitType.Rocket]:
+        return
+    loc = unit.location.map_location()
+    y, x = loc.y, loc.x
     if unit.info().mode == 'random':
-        print("random attack move")
         for d in try_nearby_directions(random.choice(list(bc.Direction))):
             if self.gc.is_move_ready(unit.id) and self.gc.can_move(unit.id, d):
                 self.gc.move_robot(unit.id, d)
                 break
     else:
-        loc = unit.location.map_location()
-        y, x = loc.y, loc.x
-        direc, score = Point(0, 0), 0
+        direc, score, dest = Point(0, 0), 0, None
         for d in self.destinations:
             if not d or not d[y][x]:
                 continue
-            s = 100 - d[y][x][1] + 5 * d.rocket if not d.factory else -1
+            s = 100 - d[y][x][1] + 10 * d.rocket if not d.factory else -1
             if type(d) != KarbCluster and s > score:
-                direc, score = d[y][x][0], s
+                direc, score, dest = d[y][x][0], s, d
         d = direc.to_Direction()
-        if self.gc.is_move_ready(unit.id) and self.gc.can_move(unit.id, d):
-            self.gc.move_robot(unit.id, d)
-            loc = loc.add(d)
-            if d == bc.Direction.Center:
-                unit.info().mode = 'random'
+        if d == bc.Direction.Center:
+            unit.info().mode = 'random'
+            if dest is not None:
+                dest.factory = True
+        elif self.gc.is_move_ready(unit.id):
+            for direction in try_nearby_directions(d):
+                if self.gc.can_move(unit.id, direction):
+                    self.gc.move_robot(unit.id, direction)
+                    loc = loc.add(direction)
+                    break
+            
     
     nearby = self.gc.sense_nearby_units(loc, unit.attack_range())
     attacked = False
@@ -161,11 +168,12 @@ def process_attacker(self, unit):
             y, x = nloc.y, nloc.x
             flag = False
             for d in self.destinations:
-                if type(d) != KarbCluster and d[y][x] and d[y][x][1] < 5:
+                if type(d) != KarbCluster and not d.factory and d[y][x] and d[y][x][1] < 5:
                     flag = True
                     break
             if not flag:
                 make_poi(self, Point(y, x))
+                unit.info().mode = 'good'
 
         
 
@@ -460,42 +468,45 @@ def _map_update(map, update, ml):
 
 
 def _map_check(map, ml):
-    if ml is None or map is None:
-        return False, None
-    ans = [[map[y][x] for x in range(ml.x - 1, ml.x + 2)] for y in range(ml.y - 1, ml.y + 2)]
-    q = []
-    pi = 0
-    blocked = 0
+    try:
+        if ml is None or map is None:
+            return False, None
+        ans = [[map[y][x] for x in range(ml.x - 1, ml.x + 2)] for y in range(ml.y - 1, ml.y + 2)]
+        q = []
+        pi = 0
+        blocked = 0
 
-    for y in range(3):
-        for x in range(3):
-            if ans[y][x] is None or y == x == 1:
-                blocked += 1
-                ans[y][x] = (ans[y][x], None)
-            elif _points_in(y, x, ans[y][x][0]):
-                pi += 1
-                ans[y][x] = (ans[y][x], True)
-            else:
-                q.append((y, x))
-                ans[y][x] = (ans[y][x], False)
-    if pi == 0:
-        return True, None
-    index = 0
-    while index < len(q) and pi > 0:
-        y, x = q[index]
-        index += 1
-        for dy in range(-1, 2):
-            ny = y + dy
-            if not (0 <= ny < 3):
-                continue
-            for dx in range(-1, 2):
-                nx = x + dx
-                if 0 <= nx < 3 and ans[ny][nx][1]:
-                    ans[ny][nx] = ((Point(-dy, -dx), ans[ny][nx][0][1]), False)
-                    pi -= 1
-    if pi == 0:
-        return True, ans
-    else:
+        for y in range(3):
+            for x in range(3):
+                if ans[y][x] is None or y == x == 1:
+                    blocked += 1
+                    ans[y][x] = (ans[y][x], None)
+                elif _points_in(y, x, ans[y][x][0]):
+                    pi += 1
+                    ans[y][x] = (ans[y][x], True)
+                else:
+                    q.append((y, x))
+                    ans[y][x] = (ans[y][x], False)
+        if pi == 0:
+            return True, None
+        index = 0
+        while index < len(q) and pi > 0:
+            y, x = q[index]
+            index += 1
+            for dy in range(-1, 2):
+                ny = y + dy
+                if not (0 <= ny < 3):
+                    continue
+                for dx in range(-1, 2):
+                    nx = x + dx
+                    if 0 <= nx < 3 and ans[ny][nx][1]:
+                        ans[ny][nx] = ((Point(-dy, -dx), ans[ny][nx][0][1]), False)
+                        pi -= 1
+        if pi == 0:
+            return True, ans
+        else:
+            return False, None
+    except:
         return False, None
 
 

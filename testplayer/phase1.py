@@ -8,6 +8,7 @@ from utilities import end_round
 from utilities import Container
 from utilities import process_worker
 from utilities import process_attacker
+from utilities import make_poi
 from utilities import choose_attacking_units
 import battlecode as bc
 import random
@@ -114,6 +115,7 @@ def replicate_workers_phase(state):
     gi.oprevcount = 0
     for unit in units:
         ui = unit.info()
+        ui.arrived = False
         if ui.is_B_group:
             gi.count += 1
             gi.prevcount += 1
@@ -197,7 +199,7 @@ def process_units(state, units, factories, b_info, create_type):
                         if gc.can_blueprint(unit.id, bc.UnitType.Factory, direction) and factory_loc_check_update(nloc):
                             #must blueprint
                             gc.blueprint(unit.id, bc.UnitType.Factory, direction)
-                            b_info.factory_loc = 
+                            b_info.factory_loc = make_poi(state, Point(nloc), factory=True)
                             built = True
                             break
                 elif b_info.factory_loc is None and gc.karbonite() > ROCKET_BUILD_COST:
@@ -206,11 +208,63 @@ def process_units(state, units, factories, b_info, create_type):
                         nloc = ml.add(direction)
                         if gc.can_blueprint(unit.id, bc.UnitType.Rocket, direction):
                             gc.blueprint(unit.id, bc.UnitType.Rocket, direction)
-                            b_info.factory_loc = nloc
+                            b_info.factory_loc = make_poi(state, Point(nloc), rocket=True)
                             built = True
                             break
                 elif b_info.factory_loc is not None:
                     # should go to factory
+                    if gc.is_move_ready(unit.id):
+                        goal, dist = state.destinations[b_info.factory_loc][ml.y][ml.x]
+                        goal = goal.to_Direction()
+                        if dist == 1:
+                            lg = goal.rotate_left()
+                            rg = goal.rotate_right()
+                            if gc.can_move(unit.id, lg):
+                                gc.move_robot(unit.id, lg)
+                            elif gc.can_move(unit.id, rg):
+                                gc.move_robot(unit.id, rg)
+                            #else do nothing
+                        else:
+                            for direction in try_nearby_directions(goal):
+                                if gc.can_move(unit.id, direction):
+                                    gc.move_robot(unit.id, direction)
+                                    break
+                    try_harvest(state, unit, bc.Direction.North)
+                if not built and b_info.factory_loc is None:
+                    # go to cluster or switch B cluster
+                    cluster = state.karb_clusters[b_info.target]
+                    if cluster.karb > 0:
+                        goal, dist = cluster[ml.y][ml.x]
+                        goal = goal.to_Direction()
+                        if ui.arrived or goal == bc.Direction.Center:
+                            ui.arrived = True
+                            process_worker(state, unit)
+                        else:
+                            ui.arrived = False
+                            for direction in try_nearby_directions(goal):
+                                if gc.can_move(unit.id, direction):
+                                    gc.move_robot(unit.id, direction)
+                                    break
+                            try_harvest(state, unit, goal.opposite())
+                    else:
+                        # switch B cluster
+                        prev = b_info.target
+                        cid = 0
+                        score = -1
+                        for i in range(len(state.karb_clusters)):
+                            s = _cluster_worker_score(ml, state.karb_clusters[i])
+                            if s > score and i != prev:
+                                cid, score = i, s
+                        b_info.target = cid
+
+                        goal, dist = cluster[ml.y][ml.x]
+                        goal = goal.to_Direction()
+                        for direction in try_nearby_directions(goal):
+                            if gc.can_move(unit.id, direction):
+                                gc.move_robot(unit.id, direction)
+                                break
+                        try_harvest(state, unit, goal.opposite())
+
 
             if not ui.is_B_group:
                 # should just harvest

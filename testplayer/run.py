@@ -54,8 +54,8 @@ def main_earth(self):
     # let's start off with some research!
     # we can queue as much as we want.
     self.gc.queue_research(bc.UnitType.Worker) #more harvest 25
-    self.gc.queue_research(bc.UnitType.Rocket) #more build 100
-    self.gc.queue_research(bc.UnitType.Worker)
+    self.gc.queue_research(bc.UnitType.Rocket)
+    self.gc.queue_research(bc.UnitType.Worker) #more build 100
     self.gc.queue_research(bc.UnitType.Mage) #more damage 125
 
     # self.karb_clusters is a list of KarbClusters
@@ -66,18 +66,40 @@ def main_earth(self):
     phase0.add_og_poi(self)
     self.karb_clusters, self.neighbors, self.cmap = phase0.earth_karbonite_search(self)
     self.destinations += self.karb_clusters
+    self.mars_map = self.gc.starting_map(bc.Planet.Mars)
     try:
         b_info = phase1.replicate_workers_phase(self)
     except Exception as e:
         raise(e)
-    units, factories = [], []
-    for unit in self.gc.my_units:
-        if unit.unit_type == bc.UnitType.Factory:
-            factories.append(unit)
-        elif unit.unit_type != bc.UnitType.Rocket:
-            units.append(unit)
-    r = random.random()
-    phase1.process_units(self, units, factories, b_info, lambda: bc.UnitType.Ranger if r > .4 else bc.UnitType.Mage)
+    while True:
+        units, factories = [], []
+        for unit in self.gc.my_units:
+            if unit.unit_type == bc.UnitType.Factory:
+                factories.append(unit)
+            elif unit.unit_type != bc.UnitType.Rocket:
+                units.append(unit)
+            else:
+                nearby = self.gc.sense_nearby_units(unit.location.map_location(), 2)
+                for other in nearby:
+                    if self.gc.can_load(unit.id, other.id):
+                        self.gc.load(unit.id, other.id)
+                if unit.structure_garrison() == unit.structure_max_capacity():
+                    x, y = (int)(random.random() * self.mars_map.width), (int)(random.random() * self.mars_map.height)
+                    loc = bc.MapLocation(bc.Planet.Mars, x, y)
+                    while not self.mars_map.is_passable_terrain_at(loc):
+                        x, y = (int)(random.random() * self.mars_map.width), (int)(random.random() * self.mars_map.height)
+                        loc = bc.MapLocation(bc.Planet.Mars, x, y)
+                    og = unit.location.map_location()
+                    _y, _x = og.y, og.x
+                    for i in range(len(self.destinations)):
+                        d = self.destinations[i]
+                        if d.rocket and d[_y][_x][1] == 0:
+                            self.destinations = self.destinations[:i] + self.destinations[i + 1:]
+                            break
+                    self.gc.launch_rocket(unit.id, loc)
+        r = random.random()
+        phase1.process_units(self, units, factories, b_info, lambda: bc.UnitType.Ranger if r > .4 else bc.UnitType.Mage)
+        self.gc.next_turn()
     #TODO
 
 def main_mars(self):

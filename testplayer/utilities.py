@@ -95,6 +95,7 @@ def make_poi(self, p, factory = False, rocket = False):
         index += 1
     
     self.destinations.append(Destination(result, factory, rocket))
+    return len(self.destinations) - 1
 
 
 class KarbCluster(Destination):
@@ -125,16 +126,17 @@ def process_worker(self, worker):
 def process_attacker(self, unit):
     loc = unit.location.map_location()
     y, x = loc.y, loc.x
-    direc, dist = Point(0, 0), 1000
+    direc, score = Point(0, 0), 0
     for d in self.destinations:
-        if type(d) != KarbCluster and d[y][x][1] < dist:
-            direc, dist = d[y][x]
+        s = 100 - d[y][x][1] + 5 * d.rocket
+        if type(d) != KarbCluster and s > score:
+            direc, score = d[y][x][0], s
     d = direc.to_Direction()
     if self.gc.is_move_ready(unit.id) and self.gc.can_move(unit.id, d):
         self.gc.move_robot(unit.id, d)
         loc = loc.add(d)
     
-    nearby = self.gc.sense_nearby_units(loc, 2)
+    nearby = self.gc.sense_nearby_units(loc, unit.attack_range())
     attacked = False
     for other in nearby:
         if other.team != self.team:

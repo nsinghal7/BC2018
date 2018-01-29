@@ -83,10 +83,11 @@ def main_earth(self):
                     units.append(unit)
                 else:
                     nearby = self.gc.sense_nearby_units(unit.location.map_location(), 2)
+                    round = self.gc.round()
                     for other in nearby:
-                        if self.gc.can_load(unit.id, other.id) and (other.unit_type != bc.UnitType.Worker or random.random() < .05):
+                        if self.gc.can_load(unit.id, other.id) and (other.unit_type != bc.UnitType.Worker or random.random() < .05 or round == 749):
                             self.gc.load(unit.id, other.id)
-                    if len(unit.structure_garrison()) >= unit.structure_max_capacity() - 4:
+                    if len(unit.structure_garrison()) >= unit.structure_max_capacity() - 4 or round == 749:
                         x, y = (int)(random.random() * self.mars_map.width), (int)(random.random() * self.mars_map.height)
                         loc = bc.MapLocation(bc.Planet.Mars, x, y)
                         while not self.mars_map.is_passable_terrain_at(loc):

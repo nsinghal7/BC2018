@@ -3,6 +3,8 @@ import random
 import sys
 
 MORE_THAN_MAX_MAP_DIM = 70
+def choose_attacking_units():
+    return random.choice(bc.UnitType.Mage, bc.UnitType.Ranger, bc.UnitType.Knight, bc.UnitType.Healer)
 
 
 def end_round(state):

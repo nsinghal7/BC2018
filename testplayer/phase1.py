@@ -7,11 +7,14 @@ from utilities import UnitQueue
 from utilities import end_round
 from utilities import Container
 from utilities import process_worker
+from utilities import process_attacker
+from utilities import make_poi
+from utilities import choose_attacking_units
 import battlecode as bc
 import random
 import sys
 
-PHASE1_WORKERS_WANTED = 7
+PHASE1_WORKERS_WANTED = 5
 MIN_WORKERS = 8
 HEAT_LIMIT = 10
 FACTORY_BUILD_COST = 200
@@ -108,17 +111,22 @@ def replicate_workers_phase(state):
     gi = Container()
     gi.count = 0
     gi.prevcount = 0
+    gi.ocount = 0
+    gi.oprevcount = 0
     for unit in units:
         ui = unit.info()
+        ui.arrived = False
         if ui.is_B_group:
             gi.count += 1
             gi.prevcount += 1
+        else:
+            gi.ocount += 1
+            gi.oprevcount += 1
     gi.target = cluster_index
     gi.factory_loc = None
-
-    while True:
+    stop = False
+    while not stop:
         allUnits = gc.my_units()
-        extras = []
         factories = []
         units = []
         for unit in allUnits:
@@ -126,10 +134,10 @@ def replicate_workers_phase(state):
                 factories.append(unit)
             else:
                 units.append(unit)
-
-        process_units(state, units, extras, factories, gi, lambda: bc.UnitType.Worker)
+        stop = process_units(state, units, extras, factories, gi, choose_attacking_units)
 
         end_round(state)
+    return gi
 
 
 
@@ -166,17 +174,23 @@ def process_units(state, units, factories, b_info, create_type):
         ml = unit.location.map_location()
         ui = unit.info()
         if unit.unit_type == bc.UnitType.Worker:
-            if b_info.prevcount < 3 and gc.karbonite() > KARBONITE_FOR_REPLICATE:
+            if b_info.prevcount < MIN_WORKERS or b_info.oprevcount < MIN_WORKERS and unit.ability_heat() < HEAT_LIMIT and  gc.karbonite() > KARBONITE_FOR_REPLICATE:
                 #panic and replicate
                 for direction in try_nearby_directions(bc.Direction.North):
                     if gc.can_replicate(unit.id, direction):
                         gc.replicate(unit.id, direction)
                         new = gc.sense_unit_at_location(ml.add(direction))
                         units.append(new)
-                        new.info().is_B_group = True
+                        if (ui.is_B_group and b_info.oprevcount >= MIN_WORKERS) or b_info.prevcount < 3:
+                            new.info().is_B_group = True
+                        elif (not ui.is_B_group and b_info.prevcount >= MIN_WORKERS) or b_info.oprevcount < 3:
+                            new.info().is_B_group = False
+                        else:
+                            new.info().is_B_group = b_info.prevcount <= b_info.oprevcount
                         break
             #continue as normal, don't replicate
             if ui.is_B_group:
+                b_info.count += 1
                 built = False
                 if b_info.factory_loc is None and len(factories) < MIN_FACTORIES and gc.karbonite() > FACTORY_BUILD_COST:
                     # try build factory 
@@ -185,7 +199,7 @@ def process_units(state, units, factories, b_info, create_type):
                         if gc.can_blueprint(unit.id, bc.UnitType.Factory, direction) and factory_loc_check_update(nloc):
                             #must blueprint
                             gc.blueprint(unit.id, bc.UnitType.Factory, direction)
-                            b_info.factory_loc = nloc
+                            b_info.factory_loc = make_poi(state, Point(nloc), factory=True)
                             built = True
                             break
                 elif b_info.factory_loc is None and gc.karbonite() > ROCKET_BUILD_COST:
@@ -194,14 +208,69 @@ def process_units(state, units, factories, b_info, create_type):
                         nloc = ml.add(direction)
                         if gc.can_blueprint(unit.id, bc.UnitType.Rocket, direction):
                             gc.blueprint(unit.id, bc.UnitType.Rocket, direction)
-                            b_info.factory_loc = nloc
+                            b_info.factory_loc = make_poi(state, Point(nloc), rocket=True)
                             built = True
                             break
                 elif b_info.factory_loc is not None:
                     # should go to factory
-                    
-            if not ui.is_B_group or not built:
+                    if gc.is_move_ready(unit.id):
+                        goal, dist = state.destinations[b_info.factory_loc][ml.y][ml.x]
+                        goal = goal.to_Direction()
+                        if dist == 1:
+                            lg = goal.rotate_left()
+                            rg = goal.rotate_right()
+                            if gc.can_move(unit.id, lg):
+                                gc.move_robot(unit.id, lg)
+                            elif gc.can_move(unit.id, rg):
+                                gc.move_robot(unit.id, rg)
+                            #else do nothing
+                        else:
+                            for direction in try_nearby_directions(goal):
+                                if gc.can_move(unit.id, direction):
+                                    gc.move_robot(unit.id, direction)
+                                    break
+                    try_harvest(state, unit, bc.Direction.North)
+                if not built and b_info.factory_loc is None:
+                    # go to cluster or switch B cluster
+                    cluster = state.karb_clusters[b_info.target]
+                    if cluster.karb > 0:
+                        goal, dist = cluster[ml.y][ml.x]
+                        goal = goal.to_Direction()
+                        if ui.arrived or goal == bc.Direction.Center:
+                            ui.arrived = True
+                            process_worker(state, unit)
+                        else:
+                            ui.arrived = False
+                            for direction in try_nearby_directions(goal):
+                                if gc.can_move(unit.id, direction):
+                                    gc.move_robot(unit.id, direction)
+                                    break
+                            try_harvest(state, unit, goal.opposite())
+                    else:
+                        # switch B cluster
+                        prev = b_info.target
+                        cid = 0
+                        score = -1
+                        for i in range(len(state.karb_clusters)):
+                            s = _cluster_worker_score(ml, state.karb_clusters[i])
+                            if s > score and i != prev:
+                                cid, score = i, s
+                        b_info.target = cid
 
+                        goal, dist = cluster[ml.y][ml.x]
+                        goal = goal.to_Direction()
+                        for direction in try_nearby_directions(goal):
+                            if gc.can_move(unit.id, direction):
+                                gc.move_robot(unit.id, direction)
+                                break
+                        try_harvest(state, unit, goal.opposite())
+
+
+            if not ui.is_B_group:
+                # should just harvest
+                process_worker(state, unit)
+        else:
+            process_attacker(state, unit)
 
 
 

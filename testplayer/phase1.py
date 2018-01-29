@@ -134,7 +134,7 @@ def replicate_workers_phase(state):
                 factories.append(unit)
             else:
                 units.append(unit)
-        stop = process_units(state, units, extras, factories, gi, choose_attacking_units)
+        stop = process_units(state, units, factories, gi, choose_attacking_units)
 
         end_round(state)
     return gi
@@ -147,6 +147,7 @@ def process_units(state, units, factories, b_info, create_type):
     Returns True if built a factory, else False. ASSUMES UnitQueue has been initialized for all
     units currently in units. ASSUMES units is a list of only robots
     """
+    ans = False
     gc = state.gc
     b_info.count = 0
     for factory in factories:
@@ -200,6 +201,7 @@ def process_units(state, units, factories, b_info, create_type):
                             #must blueprint
                             gc.blueprint(unit.id, bc.UnitType.Factory, direction)
                             b_info.factory_loc = make_poi(state, Point(nloc), factory=True)
+                            b_info.factory_id = gc.sense_unit_at_location(nloc)
                             built = True
                             break
                 elif b_info.factory_loc is None and gc.karbonite() > ROCKET_BUILD_COST:
@@ -209,6 +211,7 @@ def process_units(state, units, factories, b_info, create_type):
                         if gc.can_blueprint(unit.id, bc.UnitType.Rocket, direction):
                             gc.blueprint(unit.id, bc.UnitType.Rocket, direction)
                             b_info.factory_loc = make_poi(state, Point(nloc), rocket=True)
+                            b_info.factory_id = gc.sense_unit_at_location(nloc)
                             built = True
                             break
                 elif b_info.factory_loc is not None:
@@ -224,6 +227,13 @@ def process_units(state, units, factories, b_info, create_type):
                             elif gc.can_move(unit.id, rg):
                                 gc.move_robot(unit.id, rg)
                             #else do nothing
+                            if gc.can_build(unit.id, b_info.factory_id):
+                                gc.build(unit.id, b_info.factory_id)
+                                if gc.unit(b_info.factory_id).structure_is_built():
+                                    ans = True
+                            else:
+                                raise Exception("Why TF can't I build it?")
+
                         else:
                             for direction in try_nearby_directions(goal):
                                 if gc.can_move(unit.id, direction):
@@ -271,7 +281,7 @@ def process_units(state, units, factories, b_info, create_type):
                 process_worker(state, unit)
         else:
             process_attacker(state, unit)
-
+    return ans
 
 
 

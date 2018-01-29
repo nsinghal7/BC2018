@@ -72,34 +72,39 @@ def main_earth(self):
     except Exception as e:
         raise(e)
     while True:
-        units, factories = [], []
-        for unit in self.gc.my_units:
-            if unit.unit_type == bc.UnitType.Factory:
-                factories.append(unit)
-            elif unit.unit_type != bc.UnitType.Rocket:
-                units.append(unit)
-            else:
-                nearby = self.gc.sense_nearby_units(unit.location.map_location(), 2)
-                for other in nearby:
-                    if self.gc.can_load(unit.id, other.id):
-                        self.gc.load(unit.id, other.id)
-                if unit.structure_garrison() == unit.structure_max_capacity():
-                    x, y = (int)(random.random() * self.mars_map.width), (int)(random.random() * self.mars_map.height)
-                    loc = bc.MapLocation(bc.Planet.Mars, x, y)
-                    while not self.mars_map.is_passable_terrain_at(loc):
+        try:
+            units, factories = [], []
+            for unit in self.gc.my_units():
+                if unit.unit_type == bc.UnitType.Factory:
+                    factories.append(unit)
+                elif unit.unit_type != bc.UnitType.Rocket:
+                    units.append(unit)
+                else:
+                    nearby = self.gc.sense_nearby_units(unit.location.map_location(), 2)
+                    for other in nearby:
+                        if self.gc.can_load(unit.id, other.id):
+                            self.gc.load(unit.id, other.id)
+                    if len(unit.structure_garrison()) >= unit.structure_max_capacity() - 4:
                         x, y = (int)(random.random() * self.mars_map.width), (int)(random.random() * self.mars_map.height)
                         loc = bc.MapLocation(bc.Planet.Mars, x, y)
-                    og = unit.location.map_location()
-                    _y, _x = og.y, og.x
-                    for i in range(len(self.destinations)):
-                        d = self.destinations[i]
-                        if d.rocket and d[_y][_x][1] == 0:
-                            self.destinations = self.destinations[:i] + self.destinations[i + 1:]
-                            break
-                    self.gc.launch_rocket(unit.id, loc)
-        r = random.random()
-        phase1.process_units(self, units, factories, b_info, lambda: bc.UnitType.Ranger if r > .4 else bc.UnitType.Mage)
-        self.gc.next_turn()
+                        while not self.mars_map.is_passable_terrain_at(loc):
+                            x, y = (int)(random.random() * self.mars_map.width), (int)(random.random() * self.mars_map.height)
+                            loc = bc.MapLocation(bc.Planet.Mars, x, y)
+                        og = unit.location.map_location()
+                        _y, _x = og.y, og.x
+                        for i in range(len(self.destinations)):
+                            d = self.destinations[i]
+                            if d.rocket and d[_y][_x][1] == 0:
+                                self.destinations = self.destinations[:i] + self.destinations[i + 1:]
+                                break
+                        self.gc.launch_rocket(unit.id, loc)
+            r = random.random()
+            phase1.process_units(self, units, factories, b_info, lambda: bc.UnitType.Ranger if r > .4 else bc.UnitType.Mage)
+            self.gc.next_turn()
+        except Exception as e:
+            print("help: " + str(e))
+            self.gc.next_turn()
+            pass
     #TODO
 
 def main_mars(self):

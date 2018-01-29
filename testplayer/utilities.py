@@ -126,17 +126,28 @@ def process_worker(self, worker):
     
     
 def process_attacker(self, unit):
-    loc = unit.location.map_location()
-    y, x = loc.y, loc.x
-    direc, score = Point(0, 0), 0
-    for d in self.destinations:
-        s = 100 - d[y][x][1] + 5 * d.rocket
-        if type(d) != KarbCluster and s > score:
-            direc, score = d[y][x][0], s
-    d = direc.to_Direction()
-    if self.gc.is_move_ready(unit.id) and self.gc.can_move(unit.id, d):
-        self.gc.move_robot(unit.id, d)
-        loc = loc.add(d)
+    if unit.info().mode == 'random':
+        print("random attack move")
+        for d in try_nearby_directions(random.choice(list(bc.Direction))):
+            if self.gc.is_move_ready(unit.id) and self.gc.can_move(unit.id, d):
+                self.gc.move_robot(unit.id, d)
+                break
+    else:
+        loc = unit.location.map_location()
+        y, x = loc.y, loc.x
+        direc, score = Point(0, 0), 0
+        for d in self.destinations:
+            if not d or not d[y][x]:
+                continue
+            s = 100 - d[y][x][1] + 5 * d.rocket if not d.factory else -1
+            if type(d) != KarbCluster and s > score:
+                direc, score = d[y][x][0], s
+        d = direc.to_Direction()
+        if self.gc.is_move_ready(unit.id) and self.gc.can_move(unit.id, d):
+            self.gc.move_robot(unit.id, d)
+            loc = loc.add(d)
+            if d == bc.Direction.Center:
+                unit.info().mode = 'random'
     
     nearby = self.gc.sense_nearby_units(loc, unit.attack_range())
     attacked = False
@@ -153,8 +164,8 @@ def process_attacker(self, unit):
                 if type(d) != KarbCluster and d[y][x] and d[y][x][1] < 5:
                     flag = True
                     break
-        if not flag:
-            make_poi(self, Point(y, x))
+            if not flag:
+                make_poi(self, Point(y, x))
 
         
 
@@ -233,6 +244,10 @@ def follow_path_to_karb(self, worker):
     info = worker.info()
     path = info.path_to_karb
     if self.gc.is_move_ready(worker.id):
+        if not path or not (-1 <= path[0].y <= 1 and -1 <= path[0].x <= 1):
+            info.path_to_karb = None
+            info.mode = 'random'
+            return
         for d in try_nearby_directions(path[0].to_Direction()):
             if self.gc.can_move(worker.id, d):
                 self.gc.move_robot(worker.id, d)
@@ -274,6 +289,10 @@ def harvest_cluster(self, worker):
 
 
 def harvest(self, worker, direction):
+    try:
+        worker = self.gc.unit(worker.id)
+    except:
+        return False
     if self.gc.can_harvest(worker.id, direction):
         self.gc.harvest(worker.id, direction)
         loc = worker.location.map_location().add(direction)
@@ -441,6 +460,8 @@ def _map_update(map, update, ml):
 
 
 def _map_check(map, ml):
+    if ml is None or map is None:
+        return False, None
     ans = [[map[y][x] for x in range(ml.x - 1, ml.x + 2)] for y in range(ml.y - 1, ml.y + 2)]
     q = []
     pi = 0
